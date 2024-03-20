@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+
+<launch>
+
+  <!-- <node pkg="launchers" type="map_to_sensor_init_publisher.py" name="map_to_sensor_init" output="screen">
+    <param name="gps_topic" value="/odometry/filtered_odom"/>
+    <param name="super_odometry_topic" value="/integrated_to_init"/>
+  </node> -->
+
+  <!-- <node pkg="tf" type="static_transform_publisher" name="sensor_init_to_sensor_init_rot" args="0 0 0 0 0 3.14159 sensor_init sensor_init_rot 100" />
+
+  <node pkg="tf" type="static_transform_publisher" name="gps_to_imu" args="0 0 0 0 0 0 vehicle novatel/imu_frame 100" /> -->
+
+  <!-- <node pkg="torch_mpc" type="odom_tf.py" name="remove_superodom" output="screen">
+    </node> -->
+  <!-- <node pkg="launchers" type="gps_odometry.py" name="gps_odom" output="screen">
+        <param name="gps_topic" value="/odometry/filtered_odom"/>
+        <param name="out_topic" value="/integrated_to_init"/>
+        <param name="odom_frame_id" value="sensor_init"/>
+        <param name="base_frame_id" value="vehicle"/>
+  </node> -->
+  <rosparam command="load" file="$(find super_odometry)/config/yamaha.yaml"/>
+
+  <node pkg="super_odometry" type="feature_extraction_node" name="feature_extraction_node" output="screen" required="true">
+          <param name="remove_super_odom" value="true"/>
+  </node> 
+
+  <!-- <node pkg="yamaha_gps_utils" type="waypoint_feature_publisher2.py" name="waypoint_feature_publisher" output="screen"/> -->
+
+</launch>

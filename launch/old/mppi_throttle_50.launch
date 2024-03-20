@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+
+<launch>
+    <arg name="model_fp" default=""/>
+    <arg name="rgb_list" default="1,0,0"/>
+    <arg name="learning_config_file" default="../../../../configs/yamaha_atv/atv_model_0.1.yaml"/>
+    <arg name="node_name" default="mppi_node_throttle"/>
+    <arg name="device" default="cpu"/>
+    <include file="$(find torch_mpc)/launch/mppi_throttle_20.launch">
+        <arg name="node_name" value="$(arg node_name)"/>
+        <arg name="device" value="$(arg device)"/>
+        <arg name="kbm_config" value="$(find torch_mpc)/configs/kbm_50.yaml"/>
+        <arg name="mppi_throttle_noise" value="0.50"/>
+        <arg name="mppi_steer_noise" value="0.25"/>
+        <arg name="mppi_ou_alpha" value="[0.0, 0.0]"/>
+        <arg name="mppi_ou_scale" value="[1.3, 0.5]"/>
+        <arg name="mppi_d_ou_scale" value="[1.0, 6.0]"/>
+        <arg name="mppi_N" value="1024"/>
+        <arg name="mppi_uN" value="1024"/>
+        <arg name="mppi_H" value="50"/>
+        <arg name="mppi_sH" value="0"/>
+        <arg name="rgb_list" value="$(arg rgb_list)"/>
+        <arg name="kbm_model_name" value="gravity"/>
+        <arg name="learning_config_file" value="$(arg learning_config_file)"/>
+        <arg name="model_fp" value="$(arg model_fp)"/>
+    </include>
+
+</launch>

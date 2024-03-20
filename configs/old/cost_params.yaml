@@ -1,0 +1,27 @@
+HardSpeedCost_params_max_lim: 7.0
+HardSpeedCost_params_optimal_speed: 6.5
+joy_ctrl:
+  MAX_TURN: 415
+
+
+HardSpeedCost_params_weight: 1.0
+HardSpeedCost_params_min_lim: 0.0
+HardSpeedCost_params_speed_penalty: 100000.0
+HardSpeedCost_params_smooth_speed_cost: 1000.
+
+EuclideanDistanceToGoal_params_weight: 10000.0
+EuclideanDistanceToGoal_params_prev_cost_thresh: 15000.0
+EuclideanDistanceToGoal_params_second_goal_penalty: 100000000.0
+EuclideanDistanceToGoal_params_goal_radius: 2.
+
+WaypointManager_params_goal_radius: 4.
+
+CostmapProjection_params_weight: 1000.0
+
+TipOverCost_params_weight: 1.0
+TipOverCost_params_max_del_steer: [1.1 , 0.9, 0.6,0.3]
+TipOverCost_params_max_steer: [0.55 , 0.45, 0.35, 0.2]
+TipOverCost_params_max_del_steer_vel_split: [4,5.5,7]
+TipOverCost_params_max_yaw_rate: -1.0
+TipOverCost_params_alpha_del_steer: 1000
+TipOverCost_params_alpha_yaw_rate: 1000

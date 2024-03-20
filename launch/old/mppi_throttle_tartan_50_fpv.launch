@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+
+<launch>
+    <include file="$(find torch_mpc)/launch/mppi_throttle_tartan_50_sample.launch">
+        <arg name="model_fp" value="$(find torch_mpc)/models/all/50_fpv.cpt"/>
+        <arg name="rgb_list" value="1,1,1"/>
+    </include>
+
+</launch>

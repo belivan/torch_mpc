@@ -1,0 +1,53 @@
+model_type: gravity
+dt: 0.1
+device: cuda
+filter:
+  pitch:
+    active: False
+    min: 0
+    max: 0.099
+  speed:
+    active: False
+    min: 0.2
+    max: 20
+linear:
+  params:
+    '0': 0.155
+    '1': 0.5357
+    '2': -2.1885
+    '3': -1.3435
+    '4': 2.0
+  opt_param_names: 
+    - '0'
+    - '1'
+    - '2'
+    - '3'
+    # - '4'
+
+  common:  
+    vel_clip:
+      active: True
+      min: -20.
+      max: 20
+
+gravity:
+  params:
+    '0': -0.044
+    '1': 0.5665
+    '2': -2.0924
+    '3': -1.5005
+    '4': 2.0
+    '5': -0.7938
+  opt_param_names: 
+    - '0'
+    - '1'
+    - '2'
+    - '3'
+    - '5'
+
+  common:
+    vel_clip:
+      active: True
+      min: -20.
+      max: 20
+time_horizon: 5

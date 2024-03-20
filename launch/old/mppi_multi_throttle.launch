@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!-- File management -->
+    <arg name="learning_config_file" default="../../../../configs/yamaha_atv/atv_model_0.1.yaml"/>
+    <arg name="use_gridmaps" default="true"/>
+    <arg name="device" default="cpu"/>
+    <arg name="kbm_config" default="$(find torch_mpc)/configs/kbm_config_75.yaml"/>
+
+    <!-- MPPI parameters -->
+    <arg name="mppi_iterations" default="1"/>
+    <arg name="mppi_throttle_noise" default="0.25"/>
+    <arg name="mppi_steer_noise" default="0.25"/>
+    <arg name="mppi_temperature" default="0.02"/>
+    <arg name="mppi_use_ou" default="true"/>
+    <arg name="mppi_ou_alpha" default="0.95"/>
+    <arg name="mppi_ou_scale" default="5.0"/>
+    <arg name="mppi_d_ou_scale" default="1.0"/>
+    <arg name="mppi_N" default="1024"/>
+    <arg name="mppi_uN" default="256"/>
+    <arg name="mppi_H" default="100"/>
+    <arg name="mppi_sH" default="50"/>
+    <arg name="rgb_list" default="0,0,1"/>
+    <arg name="kbm_model_name" default="multi"/>
+
+	<node pkg="torch_mpc" type="mppi_node_throttle.py" name="mppi_node_multi_throttle" output="screen"> 
+        <param name="config_spec_path" value="$(dirname)/$(arg learning_config_file)"/>
+        <param name="costmap_topic" value="/local_costmap"/>
+        <param name="gridmap_topic" value="/local_gridmap"/>
+        <param name="waypoint_feature_topic" value="/next_waypoints/odom"/>
+        <param name="odom_topic" value="/integrated_to_init"/>
+        <param name="base_frame" value="sensor_init"/>
+        <param name="use_gridmaps" value="$(arg use_gridmaps)"/>
+
+        <param name="mppi_iterations" value="$(arg mppi_iterations)"/>
+        <param name="mppi_throttle_noise" value="$(arg mppi_throttle_noise)"/>
+        <param name="mppi_steer_noise" value="$(arg mppi_steer_noise)"/>
+        <param name="mppi_temperature" value="$(arg mppi_temperature)"/>
+        <param name="mppi_use_ou" value="$(arg mppi_use_ou)"/>
+        <param name="mppi_ou_alpha" value="$(arg mppi_ou_alpha)"/>
+        <param name="mppi_ou_scale" value="$(arg mppi_ou_scale)"/>
+        <param name="mppi_d_ou_scale" value="$(arg mppi_d_ou_scale)"/>
+        <param name="mppi_N" value="$(arg mppi_N)"/>
+        <param name="mppi_uN" value="$(arg mppi_uN)"/>
+        <param name="mppi_H" value="$(arg mppi_H)"/>
+        <param name="mppi_sH" value="$(arg mppi_sH)"/>
+        <param name="mppi_device" value="$(arg device)"/>
+        <param name="kbm_config" value="$(arg kbm_config)"/>
+        <param name='rgb_list' value="$(arg rgb_list)"/>
+        <param name="kbm_model_name" value="$(arg kbm_model_name)"/>
+	</node>
+
+</launch>

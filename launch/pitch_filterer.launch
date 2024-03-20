@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+
+<launch>
+  <node pkg="torch_mpc" type="pitch_filterer.py" name="pitch_filterer" output="screen">
+          <param name="odom_topic" value="/odometry/filtered_odom"/>
+          <param name="pitch_topic" value="/gps_pitch"/>
+  </node> 
+</launch>

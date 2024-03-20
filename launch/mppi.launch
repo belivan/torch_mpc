@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!-- File management -->
+    <arg name="config_fp" default="configs/costmap_speedmap.yaml"/>
+    <arg name="mpc_itrs" default="1"/>
+
+    <include file="$(find torch_mpc)/launch/pitch_filterer.launch" />
+
+	<node pkg="torch_mpc" type="mppi_node.py" name="mppi_node" output="screen"> 
+        <param name="config_fp" value="$(find torch_mpc)/$(arg config_fp)"/>
+        <param name="mpc_itrs" value="$(arg mpc_itrs)"/>
+        <param name="base_frame" value="sensor_init"/>
+	</node>
+
+</launch>

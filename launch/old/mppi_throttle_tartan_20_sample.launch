@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="model_fp" default=""/>
+    <arg name="rgb_list" default="1,1,1"/>
+    <arg name="learning_config_file" default="../../../../configs/yamaha_atv/atv_model_0.1.yaml"/>
+    <include file="$(find torch_mpc)/launch/mppi_throttle_20.launch">
+        <!-- <remap from="/mppi/viz" to="/tartan_mppi/viz"/>
+        <remap from="/mppi/stats" to="/tartan_mppi/stats"/> -->
+        <arg name="node_name" value="mppi_node_throttle_tartan"/>
+        <arg name="device" value="cuda"/>
+        <arg name="rgb_list" value="$(arg rgb_list)"/>
+        <arg name="learning_config_file" value="$(arg learning_config_file)"/>
+        <arg name="model_fp" value="$(arg model_fp)"/>
+    </include>
+</launch>

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+
+<launch>
+    <!-- File management -->
+    <arg name="config_fp" default="configs/test_throttle_config.yaml"/>
+    <arg name="mpc_itrs" default="1"/>
+    <arg name="use_gridmaps" default="true"/>
+
+    <include file="$(find torch_mpc)/launch/pitch_filterer.launch" />
+
+	<node pkg="torch_mpc" type="mppi_node_throttle.py" name="mppi_node" output="screen"> 
+        <param name="config_fp" value="$(find torch_mpc)/$(arg config_fp)"/>
+        <param name="use_gridmaps" value="$(arg use_gridmaps)"/>
+        <param name="mpc_itrs" value="$(arg mpc_itrs)"/>
+
+        <param name="costmap_topic" value="/local_costmap"/>
+        <param name="gridmap_topic" value="/local_gridmap"/>
+        <param name="max_speed_topic" value="/max_speed"/>
+        <param name="waypoint_feature_topic" value="/next_waypoints/odom"/>
+        <param name="odom_topic" value="/integrated_to_init"/>
+        <param name="base_frame" value="sensor_init"/>
+	</node>
+
+</launch>

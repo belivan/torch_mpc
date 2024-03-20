@@ -1,0 +1,138 @@
+---
+common:
+    B: 1           #number of optimizations to run in parallel
+    H: 50          #number of timesteps to roll out
+    M: 2           #dim of action space
+    dt: 0.1        #length of timestep
+    device: cpu   #device to run on 
+
+# this defines what the MPPI node subscribes to
+ros:
+    max_age: 1.
+    topics:
+        - name: state
+          topic: /integrated_to_init
+          type: Odometry
+          args: {}
+
+        - name: steer_angle
+          topic: /ros_talon/current_position
+          type: Float32
+          args: {}
+
+        - name: pitch
+          topic: /gps_pitch
+          type: Float32
+          args: {}
+
+        - name: local_costmap
+          topic: /local_costmap
+          type: GridMap
+          args:
+            key: costmap
+
+        - name: local_speedmap
+          topic: /local_speedmap
+          type: GridMap
+          args:
+            key: speedmap
+
+        - name: waypoints
+          topic: /next_waypoints/odom
+          type: PoseArray
+          args:
+            goals: True
+
+model:
+    type: GravityThrottleKBM
+    args:
+        L: 3.0
+        throttle_lim: [0., 1.]
+        steer_lim: [-0.52, 0.52]
+        steer_rate_lim: 0.3
+        actuator_model: [-0.044, 0.5665, -2.0924, -1.5005, 2.0, -0.7938]
+
+        #these should match the corresponding items in the ros section of this config
+        state_key: "state"
+        pitch_key: "pitch"
+        steer_key: "steer_angle"
+
+    actuator_delay: [5, 0] #num timesteps to delay controls
+
+sampling_strategies:
+    strategies:
+        - type: ActionLibrary
+          label: action_library
+          args:
+            K: 50
+            path: "/home/physics_atv/physics_atv_ws/src/control/torch_mpc/data/action_libraries/yamaha_atv/H75_throttle_steer_unif.pt"
+
+#        - type: UniformGaussian
+#          label: gaussian_unif
+#          args:
+#            K: 512
+#            scale: [1.0, 0.2]
+
+        - type: GaussianWalk
+          label: gaussian_walk
+          args:
+            K: 256
+            initial_distribution:
+                type: gaussian
+                scale: [0.5, 0.0]
+            alpha: [0.0, 0.0]   #low-pass on noise
+            scale: [0.000, 0.005]  #sample scale on change of noise
+
+cost_function:
+    terms:
+        - type: FootprintSpeedmapProjection
+          speedmap_key: local_speedmap #should match the name in the ros section
+          weight: 0.001
+          args:
+            length: 0.75
+            width: 0.75
+            length_offset: -1.0
+            width_offset: 0.0
+            nl: 5
+            nw: 5
+
+        #smaller footprint for constraint
+        - type: FootprintCostmapProjection
+          costmap_key: local_costmap #should match the name in the ros section
+          weight: 0.001
+          args:
+            length: 0.75
+            width: 0.75
+            length_offset: -1.0
+            width_offset: 0.0
+            cost_thresh: 0.4
+
+        #full footprint for cost eval
+        - type: FootprintCostmapProjection
+          costmap_key: local_costmap #should match the name in the ros section
+          weight: 1.0
+          args:
+            length: 4.0
+            width: 2.0
+            length_offset: -1.0
+            width_offset: 0.0
+            nl: 5
+            nw: 5
+
+#        - type: SpeedLimit
+#          weight: 1.0
+#          args:
+#            target_speed: 6.5
+#            max_speed: 7.5
+
+        - type: EuclideanDistanceToGoal
+          goal_key: waypoints
+          weight: 5.0
+          args:
+
+update_rule:
+    type: MPPI
+    args:
+        temperature: 0.1
+        
+recovery_behavior: []

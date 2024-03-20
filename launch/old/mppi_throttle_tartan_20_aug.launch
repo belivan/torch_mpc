@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+
+<launch>
+    <include file="$(find torch_mpc)/launch/mppi_throttle_tartan_20_sample.launch">
+        <arg name="learning_config_file" value="../../../../configs/yamaha_atv/atv_model_0.1_maps.yaml"/>
+        <arg name="model_fp" value="$(find torch_mpc)/models/icra/20_aug.cpt"/>
+        <arg name="rgb_list" value="1,0,0"/>
+    </include>
+
+</launch>

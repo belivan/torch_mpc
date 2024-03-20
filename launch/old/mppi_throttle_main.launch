@@ -1,0 +1,6 @@
+<launch>
+    <arg name="node" default=""/>
+    <include file="$(find torch_mpc)/launch/$(arg node).launch">
+    </include>
+
+</launch>
