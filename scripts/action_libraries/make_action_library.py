@@ -18,4 +18,5 @@ if __name__ == '__main__':
     cmd_1step = torch.stack(torch.meshgrid(throttles, steers, indexing='ij'), dim=-1).view(-1, 2)
     cmds = cmd_1step.unsqueeze(1).tile(1, args.H, 1)
 
+    # make cross compatible with C++ code
     torch.save(cmds, args.save_fp)
