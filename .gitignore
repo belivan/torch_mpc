@@ -9,3 +9,5 @@
 **/eval_physics_model/**
 *.png
 build/
+yaml-cpp-master/
+libtorch/

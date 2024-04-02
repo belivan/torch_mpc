@@ -11,8 +11,6 @@ class Model
 
 
 public:
-    Model(){} // is it necessary for me to provide these, probably, do i need to manually override?
-    ~Model(){}
     
     virtual torch::Tensor predict() = 0; // TODO: make sure action/observation space not necessary
     virtual torch::Tensor rollout() = 0;

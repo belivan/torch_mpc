@@ -15,11 +15,11 @@ class UniformGaussion: public SamplingStrategy
         // int M;
         // torch::Device device;
     public:
-        UniformGaussion(std::vector<float> scale, int B, int K, int H, int M, torch::Device device)
+        UniformGaussion(const std::vector<float> scale, cosnt int B, const int K, const int H, const int M, const torch::Device device)
         : SamplingStrategy(B, K, H, M, device),
         scale(setup_scale(scale)){}  // check if this is the right way to do this
 
-        torch::Tensor setup_scale(std::vector<float> scale)
+        torch::Tensor setup_scale(const std::vector<float> scale)
         {
             auto scale_holder = torch::tensor(scale, torch::dtype(torch::kFloat32).device(device));
             // assert len(scale) == self.M, "scale has dimension {}. Expected {}".format(actlib.shape[2], self.M)

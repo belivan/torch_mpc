@@ -6,8 +6,11 @@
 #include <string>
 #include <stdexcept> // For std::runtime_error
 #include <optional> // For std::optional
+#include <chrono>
 
 #include "sampling_strategies/base.h"
+#include "sampling_strategies/uniform_gaussian.cpp"
+#include <yaml-cpp/yaml.h>
 
 // add other classes
 
@@ -25,7 +28,7 @@ private:
 public:
     ActionSampler(std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>>& sampling_strategies)
     {
-        for(const auto& [k, strat] : sampling_strategies)
+        for (const auto& [k, strat] : sampling_strategies)
         {
             if (!this->B.has_value())
             {
@@ -98,5 +101,56 @@ public:
 
 int main()
 {
+    YAML::Node config = YAML::LoadFile("../../../configs/costmap_speedmap.yaml");
+    const std::string device = config['common']['device'].as<std::string>();
+    const int B = config['common']['B'];
+    const int H = config['common']['H'];
+    const int M = config['common']['M'];
+    const int dt = config['common']['dt'];
     
+    std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>> sampling_strategies;
+    for(const auto& sv : config['sampling_strategies']['strategies'])
+    {
+        std::string type = sv['type'].as<std::string>();
+        const std::vector<float> scale = sv['args']['scale'].as<std::vector<float>>();
+        if (type == "UniformGaussian")
+        {
+            sampling_strategies['label'] = std::make_unique<UniformGaussion>(scale, B, H, M, dt, device);
+        }
+        else if (type == "ActionLibrary")
+        {
+            sampling_strategies['label'] = std::make_unique<NActionLibrary>(type);
+        }
+        else if (type == "gaussian_mixture")
+        {
+            sampling_strategies[type] = std::make_unique<GaussianMixtureSamplingStrategy>(type);
+        }
+        else
+        {
+            throw std::runtime_error("Unknown sampling strategy " + type);
+        }
+    }
+    ActionSampler action_sampler();
+    
+    auto u_nominal = torch::stack({
+        torch::linspace(0.0, 1.0, 50),
+        torch::linspace(-0.5, -0.2, 50)
+    }, 1).unsqueeze(0).to(torch::Device(device));
+
+    auto u_lb = torch::tensor({0., -0.52}).view({1, 2}).to(torch::Device(device));
+    auto u_ub = torch::tensor({1., 0.52}).view({1, 2}).to(torch::Device(device));
+
+    auto t1 = std::chrono::high_resolution_clock::now();
+    auto samples = action_sampler.sample_dict(u_nominal, u_lb, u_ub);
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    u_nominal = u_nominal.to(torch::kCPU);
+    u_lb = u_lb.to(torch::kCPU);
+    u_ub = u_ub.to(torch::kCPU);
+    for(const auto& [k, v] : samples)
+    {
+        v.to(torch::kCPU);
+    }
+
+    std::cout << "took " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count()/1000 << "s to sample\n";
 }

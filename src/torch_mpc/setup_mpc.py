@@ -58,7 +58,7 @@ def setup_mpc(config):
     sampling_strategies = {}
     for sv in config['sampling_strategies']['strategies']:
         if sv['type'] == 'ActionLibrary':
-            sampling_strategies[sv['label']] = ActionLibrary(
+            sampling_strategies[sv['label']] = ActionLibrary( #not even used
             B=B, H=H, M=M, device=device, **sv['args'])
         elif sv['type'] == 'UniformGaussian':
             sampling_strategies[sv['label']] = UniformGaussian(
