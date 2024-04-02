@@ -47,9 +47,7 @@ class UniformGaussian: public SamplingStrategy
             noise *= scale.view({1,1,1,M});
 
             auto samples = u_nominal.view({B, 1, H, M}) + noise;
-            auto samples_clip = samples.clip(u_lb, u_ub);
-
-            return samples_clip;
+            return clip_samples(samples, u_lb, u_ub);
         }
 
         UniformGaussian& to(torch::Device &device) override
