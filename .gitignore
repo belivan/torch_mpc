@@ -10,4 +10,5 @@
 *.png
 build/
 yaml-cpp-master/
-libtorch/
+libtorch-win/
+**build_sampling/
