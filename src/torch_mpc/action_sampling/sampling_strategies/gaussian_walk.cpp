@@ -24,7 +24,7 @@ int main()
     initial_distribution['type'] = "uniform";
     initial_distribution['scale'] = {0.1, 0.5};
 
-    auto sampling_strategy = GaussianWalk(initial_distribution, scale, B, K, alpha, H, M, torch::GPU(torch::kCUDA, 0));
+    auto sampling_strategy = GaussianWalk(initial_distribution, scale, B, K, alpha, H, M, torch::kCPU);
 
     auto options = torch::TensorOptions().dtype(torch::kFloat32).device(sampling_strategy.device);
     auto nom = torch::zeros({B, H, M}, options);

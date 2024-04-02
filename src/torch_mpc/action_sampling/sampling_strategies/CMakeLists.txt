@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
-
-project(sampling)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 list(APPEND CMAKE_PREFIX_PATH "/home/anton/Desktop/SPRING24/AEC/torch_mpc/libtorch")
 find_package(Torch REQUIRED)
@@ -9,10 +9,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
 list(APPEND CMAKE_PREFIX_PATH "/home/anton/Desktop/SPRING24/AEC/torch_mpc/yaml-cpp-master")
 find_package(yaml-cpp REQUIRED)
-target_include_directories(uniform_gaussian ${YAML_CPP_INCLUDE_DIRS})
+include_directories(${YAML_CPP_INCLUDE_DIRS})
 
 add_executable(uniform_gaussian uniform_gaussian.cpp uniform_gaussian.h)
 target_link_libraries(uniform_gaussian "${TORCH_LIBRARIES}" "${YAML_CPP_LIBRARIES}")
+
 
 # The following code block is suggested to be used on Windows.
 # According to https://github.com/pytorch/pytorch/issues/25457,
@@ -25,5 +26,3 @@ target_link_libraries(uniform_gaussian "${TORCH_LIBRARIES}" "${YAML_CPP_LIBRARIE
 #                      ${TORCH_DLLS}
 #                      $<TARGET_FILE_DIR:example-app>)
 # endif (MSVC)
-
-set_property(TARGET uniform_gaussian PROPERTY CXX_STANDARD 14)

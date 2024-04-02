@@ -7,7 +7,7 @@
 #include <vector>
 #include <unordered_map>
 
-class UniformGaussion: public SamplingStrategy
+class UniformGaussian: public SamplingStrategy
 {
     /*
     Sampling strategy that applies adds gaussian noise to the nominal sequence
@@ -20,13 +20,13 @@ class UniformGaussion: public SamplingStrategy
         // torch::Device device;
         torch::Tensor scale;
     public:
-        UniformGaussion(const std::vector<double> scale, cosnt int B, const int K, const int H, const int M, torch::Device device)
+        UniformGaussian(const std::vector<double> scale, const int B, const int K, const int H, const int M, torch::Device device)
         : SamplingStrategy(B, K, H, M, device),
         scale(setup_scale(scale)){}  // check if this is the right way to do this
 
         torch::Tensor setup_scale(const std::vector<double> scale)
         {
-            auto scale_holder = torch::tensor(scale, torch::dtype(torch::kFloat32).device(device));
+            auto scale_holder = torch::tensor(scale, device);
             
             if (scale_holder.size(0) != M)
             {
@@ -43,15 +43,16 @@ class UniformGaussion: public SamplingStrategy
 
         torch::Tensor sample(const torch::Tensor &u_nominal, const torch::Tensor &u_lb, const torch::Tensor &u_ub)
         {
-            auto noise = torch::randn({B, K, H, M}, torch::dtype(torch::kFloat32).device(device));
-            auto noise *= scale.view({1,1,1,M});
+            auto noise = torch::randn({B, K, H, M}, device);
+            noise *= scale.view({1,1,1,M});
 
             auto samples = u_nominal.view({B, 1, H, M}) + noise;
-            // auto samples_clip = clip_samples(samples, u_lb, u_ub); // figure out how to implement this
+            auto samples_clip = samples.clip(u_lb, u_ub);
+
             return samples_clip;
         }
 
-        UniformGaussion& to(const torch::Device &device) override
+        UniformGaussian& to(torch::Device &device) override
         {
             this->device = device;
             this->scale = this->scale.to(device);

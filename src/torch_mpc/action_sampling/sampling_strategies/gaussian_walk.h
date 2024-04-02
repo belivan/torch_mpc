@@ -131,7 +131,7 @@ class GaussianWalk: public SamplingStrategy
             }
         }
 
-        GaussianWalk& to(const torch::Device &device) override
+        GaussianWalk& to(torch::Device &device) override
         {
             this->device = device;
             this->scale = this->scale.to(device);
