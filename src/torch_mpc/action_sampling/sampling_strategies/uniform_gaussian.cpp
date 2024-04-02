@@ -15,9 +15,10 @@ int main()
 
     auto sampling_strategy = UniformGaussion(scale, B, K, H, M, torch::GPU(torch::kCUDA, 0));
 
-    auto nom = torch::zeros({B, H, M}, torch::dtype(torch::kFloat32).device(sampling_strategy.device));
-    auto ulb = torch::ones({B, M}, torch::dtype(torch::kFloat32).device(sampling_strategy.device));
-    auto uub = torch::ones({B, M}, torch::dtype(torch::kFloat32).device(sampling_strategy.device));
+    auto options = torch::TensorOptions().dtype(torch::kFloat32).device(sampling_strategy.device);
+    auto nom = torch::zeros({B, H, M}, options);
+    auto ulb = torch::ones({B, M}, options);
+    auto uub = torch::ones({B, M}, options);
 
     ulb[0] *= 0.1;
     uub[0] *= 0.1;
