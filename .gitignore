@@ -11,4 +11,5 @@
 build/
 yaml-cpp-master/
 libtorch-win/
+libtorch/
 **build_sampling/
