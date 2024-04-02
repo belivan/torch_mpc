@@ -1,56 +1,12 @@
-#include "base.h"
-#include <torch/torch.h>
 #include <iostream>
 #include <vector>
+#include <torch/torch.h>
 
-class UniformGaussion: public SamplingStrategy
-{
-    /*
-    Sampling strategy that applies adds gaussian noise to the nominal sequence
-    */
-    private:
-        // int B;
-        // int K;
-        // int H;
-        // int M;
-        // torch::Device device;
-    public:
-        UniformGaussion(const std::vector<float> scale, cosnt int B, const int K, const int H, const int M, const torch::Device device)
-        : SamplingStrategy(B, K, H, M, device),
-        scale(setup_scale(scale)){}  // check if this is the right way to do this
+#include "uniform_gaussian.h"
 
-        torch::Tensor setup_scale(const std::vector<float> scale)
-        {
-            auto scale_holder = torch::tensor(scale, torch::dtype(torch::kFloat32).device(device));
-            // assert len(scale) == self.M, "scale has dimension {}. Expected {}".format(actlib.shape[2], self.M)
-            assert(scale_holder.size() == M, "scale has dimension {}. Expected {}".format(scale_holder.size(), M));
-            assert(torch::all(scale_holder >= 0).item<bool>(), "got negative scale");
-            // is this the right way to do this?
-
-            return scale_holder;
-        }
-
-        torch::Tensor sample(const torch::Tensor &u_nominal, const torch::Tensor &u_lb, const torch::Tensor &u_ub)
-        {
-            auto noise = torch::randn({B, K, H, M}, torch::dtype(torch::kFloat32).device(device));
-            auto noise *= scale.view({1,1,1,M});
-
-            auto samples = u_nominal.view({B, 1, H, M}) + noise;
-            // auto samples_clip = clip_samples(samples, u_lb, u_ub); // figure out how to implement this
-            return samples_clip;
-        }
-
-        UniformGaussion& to(const torch::Device &device) override
-        {
-            this->device = device;
-            this->scale = this->scale.to(device);
-            return *this;
-        }
-};
-    
 int main()
 {
-    std::vector<float> scale = {0.1, 0.5};
+    std::vector<double> scale = {0.1, 0.5};
 
     int B = 3;
     int K = 23;
@@ -78,5 +34,3 @@ int main()
 
     return 0;
 }
-
-        

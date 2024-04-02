@@ -42,7 +42,7 @@ private:
     double sigma;
     
 public:
-    SamplingStrategy(int B, int K, int H, int M, torch::Device device)
+    SamplingStrategy(int B, int K, int H, int M, const torch::Device device)
     {
         this->B = B;
         this->K = K;
