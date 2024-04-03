@@ -10,7 +10,8 @@ list(APPEND CMAKE_PREFIX_PATH "/home/anton/Desktop/SPRING24/AEC/torch_mpc/yaml-c
 find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIRS})
 
-add_subdirectory("./sampling_strategies")
+add_subdirectory(sampling_strategies)
+include_directories(sampling_strategies)
 
 add_executable(action_sampler action_sampler.h action_sampler.cpp)
 target_link_libraries(action_sampler ${TORCH_LIBRARIES} ${YAML_CPP_LIBRARIES})

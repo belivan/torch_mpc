@@ -5,17 +5,17 @@
 #include <vector>
 #include <iostream>
 #include <unordered_map>
-#include <memory> // if needed
+#include <memory>
 #include <string>
-#include <stdexcept> // For std::runtime_error
-#include <optional> // For std::optional
+#include <stdexcept>
+#include <optional>
 #include <chrono>
 #include <variant>
 
-#include "sampling_strategies/base.h"
-#include "sampling_strategies/uniform_gaussian.h"
-#include "sampling_strategies/gaussian_walk.h"
-#include "sampling_strategies/action_library.h"
+#include "base.h"
+#include "uniform_gaussian.h"
+#include "gaussian_walk.h"
+#include "action_library.h"
 #include <yaml-cpp/yaml.h>
 
 // add other classes
@@ -31,18 +31,18 @@ private:
     std::optional<int> M;
     std::optional<torch::Device> device;
 
-    std::string deviceToString(const torch::Device& device) {
-    std::string deviceType;
-    switch (device.type()) {
-        case torch::kCPU: deviceType = "cpu"; break;
-        case torch::kCUDA: deviceType = "cuda:" + std::to_string(device.index()); break;
-        default: deviceType = "unknown";
+    std::string deviceToString(const torch::Device& device) const 
+    {
+        std::string deviceType;
+        switch (device.type()) {
+            case torch::kCPU: deviceType = "cpu"; break;
+            case torch::kCUDA: deviceType = "cuda:" + std::to_string(device.index()); break;
+            default: deviceType = "unknown";
+        }
+        return deviceType;
     }
-    return deviceType;
-}
-    
-public:
-    ActionSampler(std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>> sampling_strategies)
+
+    void make_action_sampler()
     {
         for (const auto& [k, strat] : sampling_strategies)
         {
@@ -50,7 +50,7 @@ public:
             {
                 this->B = strat->B;
             }
-            else if (B.value() != strat->B)
+            else if (this->B.value() != strat->B)
             {
                 throw std::runtime_error("Mismatch in B. Got " + std::to_string(B.value()) + ", expected " + std::to_string(strat->B));
             }
@@ -58,7 +58,7 @@ public:
             {
                 this->H = strat->H;
             }
-            else if (H.value() != strat.H) 
+            else if (this->H.value() != strat->H) 
             {
                 throw std::runtime_error("Mismatch in H. Got " + std::to_string(H.value()) + ", expected " + std::to_string(strat->H));
             }
@@ -66,7 +66,7 @@ public:
             {
                 this->M = strat->M;
             }
-            else if (M.value() != strat.M) 
+            else if (this->M.value() != strat->M) 
             {
                 throw std::runtime_error("Mismatch in M. Got " + std::to_string(M.value()) + ", expected " + std::to_string(strat->M));
             }
@@ -74,16 +74,22 @@ public:
             {
                 this->device = strat->device;
             }
-            else{
-                if (strat->device.has_value() && this->device.value() != strat->device.value()) {
-                    std::string thisDevice = deviceToString(this->device.value());
-                    std::string stratDevice = deviceToString(strat->device.value());
-                    throw std::runtime_error("Mismatch in device. Got " + thisDevice + ", expected " + stratDevice);
-                }
+            else if (deviceToString(this->device.value()) != deviceToString(strat->device))
+            {
+                std::string thisDevice = deviceToString(this->device.value());
+                std::string stratDevice = deviceToString(strat->device);
+                throw std::runtime_error("Mismatch in device. Got " + thisDevice + ", expected " + stratDevice);
             }
 
             this->K += strat->K;
         }
+    }
+    
+public:
+    ActionSampler(std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>>& sampling_strategies)
+    : sampling_strategies(std::move(sampling_strategies))
+    {
+        make_action_sampler();
     }
     ~ActionSampler() {}
 
@@ -97,7 +103,7 @@ public:
         return samples;
     }
 
-    torch::Tensor sample(const torch::Tensor &u_nominal, const torch::Tensor &u_lb, const torch::Tensor &u_ub)
+    torch::Tensor sample(const torch::Tensor &u_nominal, const torch::Tensor &u_lb, const torch::Tensor &u_ub) const
     {
         auto samples_map = this->sample_dict(u_nominal, u_lb, u_ub);
         std::vector<torch::Tensor> samples;

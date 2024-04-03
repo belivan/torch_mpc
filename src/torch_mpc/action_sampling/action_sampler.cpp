@@ -4,18 +4,20 @@ int main()
 {
     YAML::Node config = YAML::LoadFile("/home/anton/Desktop/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml");
     const std::string device_config = config["common"]["device"].as<std::string>();
-    torch::Device device;
+    std::optional<torch::Device> device;
+
     if (device_config == "cuda")
     {
-        device = torch::Device(torch::kCUDA, 0);
+        device.emplace(torch::kCUDA, 0);
     }
     else if (device_config == "cpu")
     {
-        device = torch::Device(torch::kCPU);
+        device.emplace(torch::kCPU);
     }
     else
     {
         throw std::runtime_error("Unknown device " + device_config);
+        return 1;
     }
 
     const int B = config["common"]["B"].as<int>();
@@ -24,7 +26,7 @@ int main()
     const int dt = config["common"]["dt"].as<int>();
     
     std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>> sampling_strategies;
-    // for(const auto& sv : config["sampling_strategies"]["strategies"])
+
     for(auto iter = config["sampling_strategies"]["strategies"].begin(); iter != config["sampling_strategies"]["strategies"].end(); ++iter)
     {
         auto sv = iter->second;
@@ -34,13 +36,17 @@ int main()
         if (type == "UniformGaussian")
         {
             const int K = sv["args"]["K"].as<int>();
-            sampling_strategies[sv["label"].as<std::string>()] = std::make_unique<UniformGaussian>(scale, B, K, H, M, device);
+
+            auto strategy = std::make_unique<UniformGaussian>(scale, B, K, H, M, *device);
+            sampling_strategies.emplace(sv["label"].as<std::string>(), std::move(strategy));
         }
         else if (type == "ActionLibrary")
         {
             const int K = sv["args"]["K"].as<int>();
             std::string path = sv["args"]["path"].as<std::string>();
-            sampling_strategies[sv["label"].as<std::string>()] = std::make_unique<ActionLibrary>(path, B, K, H, M, device);
+
+            auto strategy = std::make_unique<ActionLibrary>(path, B, K, H, M, *device);
+            sampling_strategies.emplace(sv["label"].as<std::string>(), std::move(strategy));
         }
         else if (type == "GaussianWalk")
         {
@@ -52,7 +58,9 @@ int main()
             initial_distribution["scale"] = sv["args"]["initial_distribution"]["scale"].as<std::vector<double>>();
 
             const std::vector<double> alpha = sv["args"]["alpha"].as<std::vector<double>>();
-            sampling_strategies[sv["label"].as<std::string>()] = std::make_unique<GaussianWalk>(initial_distribution, scale, alpha, B, K, H, M, device);
+
+            auto strategy = std::make_unique<GaussianWalk>(initial_distribution, scale, alpha, B, K, H, M, *device);
+            sampling_strategies.emplace(sv["label"].as<std::string>(), std::move(strategy));
         }
         else
         {
@@ -67,10 +75,10 @@ int main()
         torch::linspace(-0.5, -0.2, 50)
     }, 1).unsqueeze(0);
 
-    u_nominal.to(device);
+    u_nominal.to(*device);
 
-    const torch::Tensor u_lb = torch::tensor({0., -0.52}, device).view({1, 2});
-    const torch::Tensor u_ub = torch::tensor({1., 0.52}, device).view({1, 2});
+    const torch::Tensor u_lb = torch::tensor({0., -0.52}, *device).view({1, 2});
+    const torch::Tensor u_ub = torch::tensor({1., 0.52}, *device).view({1, 2});
 
     auto t1 = std::chrono::high_resolution_clock::now();
     auto samples = action_sampler.sample_dict(u_nominal, u_lb, u_ub);
