@@ -112,6 +112,7 @@ public:
         return *this;
     }
 
+    // Should be a util function
     std::string deviceToString(const torch::Device& device) const 
     {
         std::string deviceType;
