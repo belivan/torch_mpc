@@ -104,6 +104,7 @@ class GaussianWalk: public SamplingStrategy
             auto _alpha = alpha.view({1, 1, 1, M});
  
             auto _ulb = u_lb.view({B, 1, 1, M}) - u_nominal.view({B, 1, H, M});
+
             auto _uub = u_ub.view({B, 1, 1, M}) - u_nominal.view({B, 1, H, M});
 
             auto noise_init = sample_initial_distribution(u_nominal, u_lb, u_ub);
@@ -140,7 +141,6 @@ class GaussianWalk: public SamplingStrategy
             else if (std::get<std::string>(initial_distribution["type"]) == "gaussian")
             {
                 auto noise = torch::randn({B, K, 1, M}, device);
-
                 noise = noise * std::get<torch::Tensor>(initial_distribution["scale"]).view({1, 1, 1, M});
                 return noise.clip(_ulb, _uub);
             }

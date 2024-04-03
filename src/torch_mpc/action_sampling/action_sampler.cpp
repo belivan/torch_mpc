@@ -77,20 +77,20 @@ int main()
     }
 
     ActionSampler action_sampler(sampling_strategies);
+    printf("Using device: %s\n", action_sampler.deviceToString(*device).c_str());
     
+    auto options = torch::TensorOptions().dtype(torch::kFloat32).device(*device);
     const torch::Tensor u_nominal = torch::stack({
-        torch::linspace(0.0, 1.0, 50),
-        torch::linspace(-0.5, -0.2, 50)
+        torch::linspace(0.0, 1.0, 50, options),
+        torch::linspace(-0.5, -0.2, 50, options)
     }, 1).unsqueeze(0);
-
-    u_nominal.to(*device);
 
     const torch::Tensor u_lb = torch::tensor({0., -0.52}, *device).view({1, 2});
     const torch::Tensor u_ub = torch::tensor({1., 0.52}, *device).view({1, 2});
 
     auto t1 = std::chrono::high_resolution_clock::now();
     
-    auto samples = action_sampler.sample_dict(u_nominal, u_lb, u_ub);
+    auto samples = action_sampler.sample_dict(u_nominal, u_lb, u_ub); //std::unordered_map<std::string, torch::Tensor> 
 
     auto t2 = std::chrono::high_resolution_clock::now();
 
@@ -98,12 +98,18 @@ int main()
     u_lb.to(torch::kCPU);
     u_ub.to(torch::kCPU);
 
+    std::string dir_path = "/home/anton/Desktop/SPRING24/AEC/torch_mpc/src/torch_mpc/action_sampling/sampling_data/";
+    torch::save(u_nominal, dir_path + "u_nominal.pt");
+    torch::save(u_lb, dir_path + "u_lb.pt");
+    torch::save(u_ub, dir_path + "u_ub.pt");
+
     for(const auto& [k, v] : samples)
     {
         v.to(torch::kCPU);
+        torch::save(v, dir_path + k + ".pt");
     }
 
-    std::cout << "Took " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms to sample\n";
+    std::cout << "Took " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms to sample and save outputs \n";
 
     return 0;
 }

@@ -31,17 +31,6 @@ private:
     std::optional<int> M;
     std::optional<torch::Device> device;
 
-    std::string deviceToString(const torch::Device& device) const 
-    {
-        std::string deviceType;
-        switch (device.type()) {
-            case torch::kCPU: deviceType = "cpu"; break;
-            case torch::kCUDA: deviceType = "cuda:" + std::to_string(device.index()); break;
-            default: deviceType = "unknown";
-        }
-        return deviceType;
-    }
-
     void make_action_sampler()
     {
         for (const auto& [k, strat] : sampling_strategies)
@@ -121,6 +110,17 @@ public:
             strat->to(device);
         }
         return *this;
+    }
+
+    std::string deviceToString(const torch::Device& device) const 
+    {
+        std::string deviceType;
+        switch (device.type()) {
+            case torch::kCPU: deviceType = "cpu"; break;
+            case torch::kCUDA: deviceType = "cuda:" + std::to_string(device.index()); break;
+            default: deviceType = "unknown";
+        }
+        return deviceType;
     }
 };
 

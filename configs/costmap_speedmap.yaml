@@ -4,7 +4,7 @@ common:
     H: 50          #number of timesteps to roll out
     M: 2           #dim of action space
     dt: 0.1        #length of timestep
-    device: cpu   #device to run on 
+    device: cuda   #device to run on 
 
 # this defines what the MPPI node subscribes to
 ros:

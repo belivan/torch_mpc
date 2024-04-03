@@ -58,7 +58,6 @@ public:
     {
         auto samples = actlib.view({1,K,H,M});
         samples = samples.repeat({B, 1, 1, 1});
-
         return clip_samples(samples, u_lb, u_ub);
     }
 
