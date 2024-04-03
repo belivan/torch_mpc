@@ -3,6 +3,7 @@ from torch import nn
 import os
 import argparse
 
+# Added the following class to support C++ reading of the tensor
 class TensorContainer(nn.Module):
     def __init__(self, tensor_dict):
         super().__init__()
@@ -25,6 +26,7 @@ if __name__ == '__main__':
     cmd_1step = torch.stack(torch.meshgrid(throttles, steers, indexing='ij'), dim=-1).view(-1, 2)
     cmds = cmd_1step.unsqueeze(1).tile(1, args.H, 1)
 
+    # Added the following to support C++ reading of the tensor
     tensor_dict = {
         'cmds': cmds
     }

@@ -28,8 +28,9 @@ class GaussianWalk: public SamplingStrategy
 
     public:
         GaussianWalk(std::unordered_map<std::string, std::variant<std::string, std::vector<double>>> initial_distribution,
-                    const std::vector<double> scale, const int B, const int K,
+                    const std::vector<double> scale,
                     const std::vector<double> alpha,
+                    const int B, const int K,
                     const int H, const int M, torch::Device device)
         : SamplingStrategy(B, K, H, M, device),
         scale(setup_scale(scale)),
@@ -149,7 +150,7 @@ class GaussianWalk: public SamplingStrategy
             }
         }
 
-        GaussianWalk& to(torch::Device &device) override
+        GaussianWalk& to(torch::Device device) override
         {
             this->device = device;
             this->scale = this->scale.to(device);

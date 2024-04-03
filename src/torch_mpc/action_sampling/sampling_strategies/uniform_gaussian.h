@@ -50,7 +50,7 @@ class UniformGaussian: public SamplingStrategy
             return clip_samples(samples, u_lb, u_ub);
         }
 
-        UniformGaussian& to(torch::Device &device) override
+        UniformGaussian& to(torch::Device device) override
         {
             this->device = device;
             this->scale = this->scale.to(device);

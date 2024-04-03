@@ -25,6 +25,7 @@ class SamplingStrategy
     friend class UniformGaussian;
     friend class GaussianWalk;
     friend class ActionLibrary;
+    friend class ActionSampler;
 private:
     /*
     Args:
@@ -48,7 +49,7 @@ public:
     virtual ~SamplingStrategy() {}
 
     virtual torch::Tensor sample(const torch::Tensor &u_nominal, const torch::Tensor &u_lb, const torch::Tensor &u_ub) = 0;
-    virtual SamplingStrategy& to(torch::Device &device) = 0;  // check if I need to return anything
+    virtual SamplingStrategy& to(torch::Device device) = 0;  // check if I need to return anything
 
     virtual torch::Tensor clip_samples(const torch::Tensor &samples, const torch::Tensor &u_lb, const torch::Tensor &u_ub)
     {

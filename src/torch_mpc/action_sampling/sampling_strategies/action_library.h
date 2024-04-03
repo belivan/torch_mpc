@@ -62,7 +62,7 @@ public:
         return clip_samples(samples, u_lb, u_ub);
     }
 
-    ActionLibrary& to(torch::Device &device) override
+    ActionLibrary& to(torch::Device device) override
     {
         this->device = device;
         this->actlib = this->actlib.to(device);

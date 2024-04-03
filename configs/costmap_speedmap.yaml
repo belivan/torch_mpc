@@ -65,13 +65,13 @@ sampling_strategies:
           label: action_library
           args:
             K: 100
-            path: "/home/physics_atv/physics_atv_ws/src/control/torch_mpc/data/action_libraries/yamaha_atv/H75_throttle_steer_unif.pt"
+            path: "/home/anton/Desktop/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/test_actionlib.pth"
 
-#        - type: UniformGaussian
-#          label: gaussian_unif
-#          args:
-#            K: 512
-#            scale: [1.0, 0.2]
+        - type: UniformGaussian
+          label: gaussian_unif
+          args:
+            K: 512
+            scale: [1.0, 0.2]
 
         - type: GaussianWalk
           label: gaussian_walk

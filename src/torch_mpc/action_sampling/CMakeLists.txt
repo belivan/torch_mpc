@@ -1,0 +1,16 @@
+cmake_minimum_required(VERSION 3.0 FATAL_ERROR)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+list(APPEND CMAKE_PREFIX_PATH "/home/anton/Desktop/SPRING24/AEC/torch_mpc/libtorch")
+find_package(Torch REQUIRED)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+
+list(APPEND CMAKE_PREFIX_PATH "/home/anton/Desktop/SPRING24/AEC/torch_mpc/yaml-cpp-master")
+find_package(yaml-cpp REQUIRED)
+include_directories(${YAML_CPP_INCLUDE_DIRS})
+
+add_subdirectory("./sampling_strategies")
+
+add_executable(action_sampler action_sampler.h action_sampler.cpp)
+target_link_libraries(action_sampler ${TORCH_LIBRARIES} ${YAML_CPP_LIBRARIES})
