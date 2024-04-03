@@ -65,7 +65,7 @@ sampling_strategies:
           label: action_library
           args:
             K: 100
-            path: "/home/anton/Desktop/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/test_actionlib.pth"
+            path: "/home/anton/Desktop/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/test_actionlib.pth" # Changed by Anton
 
         - type: UniformGaussian
           label: gaussian_unif

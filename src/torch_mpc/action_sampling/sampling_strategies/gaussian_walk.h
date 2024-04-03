@@ -75,6 +75,8 @@ class GaussianWalk: public SamplingStrategy
             initial_distribution_holder["type"] = type;
             if (std::get<std::string>(initial_distribution["type"]) == "uniform")
                 initial_distribution_holder["scale"] = setup_scale(std::get<std::vector<double>>(initial_distribution["scale"]));
+            else if (std::get<std::string>(initial_distribution["type"]) == "gaussian")
+                initial_distribution_holder["scale"] = setup_scale(std::get<std::vector<double>>(initial_distribution["scale"]));
             
             return initial_distribution_holder;
         }
@@ -129,8 +131,7 @@ class GaussianWalk: public SamplingStrategy
             auto _ulb = u_lb.view({B, 1, 1, M}) - u_nominal.select(1,0).view({B, 1, 1, M});
             auto _uub = u_ub.view({B, 1, 1, M}) - u_nominal.select(1,0).view({B, 1, 1, M});
 
-
-            if (std::get<std::string>(initial_distribution["type"]) == "uniform")
+            if (std::get<std::string>(initial_distribution["type"]) == "uniform")  //might not be correct
             {
                 auto noise = torch::rand({B, K, 1, M}, device);
                 noise = _ulb + noise * (_uub - _ulb);
@@ -139,10 +140,9 @@ class GaussianWalk: public SamplingStrategy
             else if (std::get<std::string>(initial_distribution["type"]) == "gaussian")
             {
                 auto noise = torch::randn({B, K, 1, M}, device);
+
                 noise = noise * std::get<torch::Tensor>(initial_distribution["scale"]).view({1, 1, 1, M});
-                
-                auto noise_clip = noise.clip(_ulb, _uub);
-                return noise;
+                return noise.clip(_ulb, _uub);
             }
             else
             {
