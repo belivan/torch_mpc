@@ -12,13 +12,13 @@ find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIRS})
 
 add_executable(uniform_gaussian uniform_gaussian.cpp uniform_gaussian.h)
-target_link_libraries(uniform_gaussian "${TORCH_LIBRARIES}" "${YAML_CPP_LIBRARIES}")
+target_link_libraries(uniform_gaussian "${TORCH_LIBRARIES}")
 
 add_executable(gaussian_walk gaussian_walk.cpp gaussian_walk.h)
-target_link_libraries(gaussian_walk "${TORCH_LIBRARIES}" "${YAML_CPP_LIBRARIES}")
+target_link_libraries(gaussian_walk "${TORCH_LIBRARIES}")
 
-# add_executable(action_library action_library.cpp action_library.h)
-# target_link_libraries(action_library "${TORCH_LIBRARIES}" "${YAML_CPP_LIBRARIES}")
+add_executable(action_library action_library.cpp action_library.h)
+target_link_libraries(action_library "${TORCH_LIBRARIES}")
 
 
 # The following code block is suggested to be used on Windows.

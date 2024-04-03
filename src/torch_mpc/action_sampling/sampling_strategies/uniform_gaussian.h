@@ -22,7 +22,7 @@ class UniformGaussian: public SamplingStrategy
     public:
         UniformGaussian(const std::vector<double> scale, const int B, const int K, const int H, const int M, torch::Device device)
         : SamplingStrategy(B, K, H, M, device),
-        scale(setup_scale(scale)){}  // check if this is the right way to do this
+        scale(setup_scale(scale)){}
 
         torch::Tensor setup_scale(const std::vector<double> scale)
         {

@@ -24,6 +24,7 @@ class SamplingStrategy
 {
     friend class UniformGaussian;
     friend class GaussianWalk;
+    friend class ActionLibrary;
 private:
     /*
     Args:

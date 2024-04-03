@@ -18,7 +18,7 @@ int main()
 
     auto options = torch::TensorOptions().dtype(torch::kFloat32).device(sampling_strategy.device);
     const torch::Tensor nom = torch::zeros({B, H, M}, options);
-    const torch::Tensor ulb = torch::ones({B, M}, options);
+    const torch::Tensor ulb = -torch::ones({B, M}, options);
     const torch::Tensor uub = torch::ones({B, M}, options);
 
     ulb[0] *= 0.1;
