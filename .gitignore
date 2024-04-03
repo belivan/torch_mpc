@@ -14,3 +14,4 @@ libtorch-win/
 libtorch/
 **build_sampling/
 **build_action_sampling/
+**.egg-info/

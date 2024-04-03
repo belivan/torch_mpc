@@ -58,11 +58,32 @@ if __name__ == '__main__':
     import time
     import matplotlib.pyplot as plt
 
-    config_fp = '/home/atv/physics_atv_ws/src/control/torch_mpc/configs/test_config.yaml'
+    config_fp = '/home/anton/Desktop/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml'
     config = yaml.safe_load(open(config_fp, 'r'))
+    
+    B = config['common']['B']
+    H = config['common']['H']
+    M = config['common']['M']
+    dt = config['common']['dt']
     device = config['common']['device']
 
-    action_sampler = ActionSampler(config)
+    ## setup sampler (from setup_mpc.py) ##
+    sampling_strategies = {}
+    for sv in config['sampling_strategies']['strategies']:
+        if sv['type'] == 'ActionLibrary':
+            sampling_strategies[sv['label']] = ActionLibrary( #not even used
+            B=B, H=H, M=M, device=device, **sv['args'])
+        elif sv['type'] == 'UniformGaussian':
+            sampling_strategies[sv['label']] = UniformGaussian(
+            B=B, H=H, M=M, device=device, **sv['args'])
+        elif sv['type'] == 'GaussianWalk':
+            sampling_strategies[sv['label']] = GaussianWalk(
+            B=B, H=H, M=M, device=device, **sv['args'])
+        else:
+            print('Unsupported sampling_strategy type {}'.format(sv['type']))
+            exit(1)
+
+    action_sampler = ActionSampler(sampling_strategies=sampling_strategies)
 
     u_nominal = torch.stack([
         torch.linspace(0., 1., 50),

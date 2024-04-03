@@ -110,6 +110,8 @@ int main()
     }
 
     std::cout << "Took " << std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count() << "ms to sample and save outputs \n";
-
+    // 4 ms without saving
+    // 42 ms with saving
+    // Python script 0.0855s or 85.5ms
     return 0;
 }
