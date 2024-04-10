@@ -12,10 +12,10 @@ class Model
 
 public:
     
-    virtual torch::Tensor predict() = 0; // TODO: make sure action/observation space not necessary
-    virtual torch::Tensor rollout() = 0;
-    virtual torch::Tensor get_observations() = 0;
-    virtual torch::Tensor get_actions() = 0;
+    //virtual torch::Tensor predict() = 0; // TODO: make sure action/observation space not necessary
+    //virtual torch::Tensor rollout() = 0;
+    virtual torch::Tensor predict(const torch::Tensor& state, const torch::Tensor& action) const = 0;
+    virtual torch::Tensor rollout(const torch::Tensor& state, const torch::Tensor& actions) const = 0;
 };
 
 #endif
