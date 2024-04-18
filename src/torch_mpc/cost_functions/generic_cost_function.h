@@ -9,12 +9,8 @@ private:
     std::vector<std::pair<float, TermFunctions>> cost_terms_;
     std::vector<torch::Tensor*> data_;
     torch::Device device_;
-    
 
 public:
-
-
-
     bool canComputeCost() const
     {
         for (auto &val : data_)
