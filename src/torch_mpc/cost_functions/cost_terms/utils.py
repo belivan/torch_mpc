@@ -62,7 +62,10 @@ def world_to_grid(world_pos, metadata):
     gy = (world_pos[..., 1] - oy.view(-1, *trailing_dims)) / res.view(-1, *trailing_dims)
 
     grid_pos = torch.stack([gx, gy], dim=-1).long()
-    invalid_mask = (grid_pos[..., 0] < 0) | (grid_pos[..., 1] < 0) | (grid_pos[..., 0] >= nx.view(-1, *trailing_dims)) | (grid_pos[..., 1] >= ny.view(-1, *trailing_dims))
+    invalid_mask = ((grid_pos[..., 0] < 0) | 
+                    (grid_pos[..., 1] < 0) | 
+                    (grid_pos[..., 0] >= nx.view(-1, *trailing_dims)) | 
+                    (grid_pos[..., 1] >= ny.view(-1, *trailing_dims)))
 
     return grid_pos, invalid_mask
 
