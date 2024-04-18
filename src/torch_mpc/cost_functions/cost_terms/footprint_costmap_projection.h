@@ -4,6 +4,7 @@
 #include <torch/torch.h>
 #include <string>
 #include <utils.h> // THIS IS ASSUMING THAT WE ARE GOING TO MAKE A UTILS.H AAAAA
+#include "base.h"
 
 /*
     TODO: make sure to include--

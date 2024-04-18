@@ -2,8 +2,9 @@
 #define GENERIC_COST_FUNCTION_IS_INCLUDED
 
 #include <torch/torch.h>
+#include "base.h"
 
-class GENERIC_COST_FUNCTION_IS_INCLUDED // unsure if we also need to make the termfunctions?
+class GenericCostFunction : public CostTerm // unsure if we also need to make the termfunctions?
 {
 private:
     std::vector<std::pair<float, TermFunctions>> cost_terms_;
