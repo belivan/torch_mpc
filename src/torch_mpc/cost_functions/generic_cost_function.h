@@ -45,6 +45,12 @@ public:
     }
 
     std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions) {
+        /*
+        Produce costs from states, actions
+        Args:
+            states: a [B1 x B2 x T x N] tensor of states
+            actions: a [B x B2 x T x M] tensor of actions
+        */
         auto costs = torch::zeros({states.size(0), states.size(1)}, states.options());
         auto feasible = torch::ones({states.size(0), states.size(1)}, torch::kBool).to(device);
 
@@ -53,7 +59,6 @@ public:
             costs += cost_weights[i] * new_cost;
             feasible = feasible.logical_and(new_feasible);
         }
-
         return {costs, feasible};
     }
 
