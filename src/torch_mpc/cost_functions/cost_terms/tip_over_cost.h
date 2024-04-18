@@ -1,9 +1,9 @@
+#ifndef TIP_OVER_COST_IS_INCLUDED
+#define TIP_OVER_COST_IS_INCLUDED
+
 #include <torch/torch.h>
 #include "base.h"
 #include <unordered_map>
-
-#ifndef TIP_OVER_COST_IS_INCLUDED
-#define TIP_OVER_COST_IS_INCLUDED
 
 namespace indexing = torch::indexing;
 
