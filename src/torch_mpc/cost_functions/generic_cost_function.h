@@ -22,10 +22,10 @@ but maintaining the batch shape.
 private:
     std::vector<std::shared_ptr<CostTerm>> cost_terms;
     std::vector<double> cost_weights;
-    std::unordered_map<std::string, torch::Tensor> data;
     torch::Device device;
 
 public:
+    std::unordered_map<std::string, torch::Tensor> data;
     CostFunction(const std::vector<std::pair<double, 
                 std::shared_ptr<CostTerm>>>& terms, 
                 const torch::Device& device = torch::kCPU)
@@ -69,6 +69,15 @@ public:
             keys.insert(term_keys.begin(), term_keys.end());
         }
         return std::vector<std::string>(keys.begin(), keys.end());
+    }
+
+    bool can_compute_cost() const {
+        for (const auto& v : data.values()) {
+            if (v.numel() == 0) {
+                return false;
+            }
+        }
+        return true;
     }
 
     void to(const std::string& device_type) {
