@@ -5,12 +5,12 @@ project(modelstesting)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-list(APPEND CMAKE_PREFIX_PATH "C:/Users/13059/torch_mpc/libtorch")
+list(APPEND CMAKE_PREFIX_PATH "C:/Users/13059/Downloads/libtorch/libtorch")
 find_package(Torch REQUIRED)
 include_directories(SYSTEM ${TORCH_INCLUDE_DIRS})
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 
-list(APPEND CMAKE_PREFIX_PATH "C:/Users/13059/torch_mpc/yaml-cpp")
+list(APPEND CMAKE_PREFIX_PATH "C:/Users/13059/anaconda3/Library/include/yaml-cpp")
 find_package(yaml-cpp REQUIRED)
 include_directories(${YAML_CPP_INCLUDE_DIRS})
 

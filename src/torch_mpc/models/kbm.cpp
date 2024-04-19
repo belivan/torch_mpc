@@ -45,6 +45,8 @@ int main()
 	U.index_put_({ torch::indexing::Slice(), 0 }, torch::ones({ 50 }));
 	U.index_put_({ torch::indexing::Slice(), 1 }, 0.15 * torch::ones({ 50 }));
 
+	std::cout << U << std::endl;
+
 	std::cout << "it made the torch things correctly" << std::endl;
 
 	auto t1 = std::chrono::high_resolution_clock::now();
@@ -71,12 +73,13 @@ int main()
 
 	std::cout << "this is clearly a problem with saving" << std::endl;
 
-	std::string dir_path = "C:\\Users\\13059";
+	std::string dir_path = "C:/Users/13059/";
 
 	std::cout << "surely the string is not the problem" << std::endl;
 	torch::save(X1, dir_path + "X1.pt");
 	torch::save(X2, dir_path + "X2.pt");
 	torch::save(X3, dir_path + "X3.pt");
+
 
 
 	auto t2 = std::chrono::high_resolution_clock::now();
