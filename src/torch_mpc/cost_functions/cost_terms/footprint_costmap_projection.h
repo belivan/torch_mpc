@@ -23,18 +23,18 @@ private:
     float cost_thresh, length, width, length_offset, width_offset;
     int nl, nw; 
     bool local_frame;
-    std::vector<std::string> costmap_key;
-    torch::Device device;
+    const std::vector<std::string> costmap_key;
+    const torch::Device device;
     torch::Tensor footprint;
 
 public:
 
     FootprintCostmapProjection(float cost_thresh = 1e10, float length = 5.0, float width = 3.0, int nl = 3, int nw = 3, 
                             float length_offset = -1.0, float width_offset = 0.0, bool local_frame = false, 
-                            std::vector<std::string> costmap_key = "local_costmap", torch::Device device = "cpu")
+                            const std::vector<std::string>& costmap_key = "local_costmap", const torch::Device& device = torch::kCPU)
     : cost_thresh(cost_thresh), length(length), width(width), nl(nl), nw(nw), length_offset(length_offset), 
         width_offset(width_offset), local_frame(local_frame), costmap_key(costmap_key), 
-        device(torch::Device(device))
+        device(device)
     {
         /*
         Args:
@@ -105,7 +105,8 @@ public:
 
     //     return std::make_pair(cost, new_feasible)
     // }
-    std::pair<torch::Tensor, torch::Tensor> cost(torch::Tensor states, torch::Tensor actions, torch::Tensor feasible, torch::Tensor data) override
+    std::pair<torch::Tensor, torch::Tensor> cost(torch::Tensor states, torch::Tensor actions, 
+                                                torch::Tensor feasible, torch::Tensor data) override
     {
         // move to local frame if necessary
         torch::Tensor states2 = local_frame ? move_to_local_frame(states) : states;
