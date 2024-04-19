@@ -18,7 +18,7 @@ class EuclideanDistanceToGoal : public CostTerm
         unsigned int num_goals = 2;
 
     public:
-        EuclideanDistanceToGoal(double goal_radius = 2.0, cosnt std::string& goal_key = "waypoints", 
+        EuclideanDistanceToGoal(double goal_radius = 2.0, const std::vector<std::string>& goal_key = "waypoints", 
                                 const torch::Device& device = torch::kCPU) : goal_radius(goal_radius), goal_key(goal_key), device(device) {}
         ~EuclideanDistanceToGoal() = default;
 
@@ -29,7 +29,7 @@ class EuclideanDistanceToGoal : public CostTerm
 
         std::pair cost(const torch::Tensor& states, const torch::Tensor& actions,
                     const torch::Tensor& feasable, 
-                    const const std::unordered_map<std::string, torch::Tensor>& data) override
+                    const std::unordered_map<std::string, torch::Tensor>& data) override
         {
             torch::Tensor cost = torch.zeros({states.size(0), states.size(1)},
                                             torch::TensorOptions().device(device));
@@ -39,7 +39,7 @@ class EuclideanDistanceToGoal : public CostTerm
             {
                 for (int t = 0; t < states.size(1); t++)
                 {
-                    auto bgoals = data[goal_key][bi];  // this means data is a dictionary.. change it
+                    auto bgoals = data.at(goal_key).index(bi);  // Double check this
                     if (num_goals == -1)
                     {
                         num_goals = bgoals.size(0);
@@ -72,9 +72,10 @@ class EuclideanDistanceToGoal : public CostTerm
             return *this;
         }
 
-        std::string __repr__ () const override
+        friend std::ostream& operator<<(std::ostream& os, const EuclideanDistanceToGoal& edtg)
         {
-            return "Euclidean DTG";
+            os << "EuclideanDistanceToGoal(goal_radius=" << edtg.goal_radius << ", goal_key=" << edtg.goal_key << ", device=" << edtg.device << ")";
+            return os;
         }
 };
 

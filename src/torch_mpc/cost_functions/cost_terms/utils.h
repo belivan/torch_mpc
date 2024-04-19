@@ -46,7 +46,8 @@ namespace utils
     return traj_out;
     }
 
-    std::pair<torch::Tensor, torch::Tensor> world_to_grid(const torch::Tensor& world_pos, const torch::Tensor& metadata) {
+    std::pair<torch::Tensor, torch::Tensor> world_to_grid(const torch::Tensor& world_pos, 
+                                        const std::unordered_map<std::string, torch::Tensor>& metadata) {
         /*
         Converts the world position (x,y) into indices that can be used to access the costmap.
     
@@ -61,11 +62,11 @@ namespace utils
         grid_pos:
             Tensor(B, K, T, 2) representing the indices in the grid that correspond to the world position
     */
-    auto res = metadata["resolution"];
-    auto nx = (metadata["length_x"] / res).to(torch::kLong);
-    auto ny = (metadata["length_y"] / res).to(torch::kLong);
-    auto ox = metadata["origin"].index({0});
-    auto oy = metadata["origin"].index({1});
+    auto res = metadata.at("resolution");
+    auto nx = (metadata.at("length_x") / res).to(torch::kLong);
+    auto ny = (metadata.at("length_y") / res).to(torch::kLong);
+    auto ox = metadata.at("origin").index({0});
+    auto oy = metadata.at("origin").index({1});
 
     auto gx = (world_pos.index({"...", 0}) - ox.unsqueeze(-1)) / res;
     auto gy = (world_pos.index({"...", 1}) - oy.unsqueeze(-1)) / res;
@@ -91,9 +92,9 @@ namespace utils
         goals: Tensor (B x 2) of goal positions for each costmap
     */
     int B = costmap.size(0);
-    auto res = metadata["resolution"];
-    auto nx = (metadata["height"] / res).to(torch::kLong)[0];
-    auto ny = (metadata["width"] / res).to(torch::kLong)[0];
+    auto res = metadata.at("resolution");
+    auto nx = (metadata.at("height") / res).to(torch::kLong)[0];
+    auto ny = (metadata.at("width") / res).to(torch::kLong)[0];
     
     // setup
     auto V = torch::full({B, nx+2, ny+2}, 1e10, costmap.options());
@@ -102,7 +103,8 @@ namespace utils
 
     // load in goal point
     auto goal_grid_pos = world_to_grid(goals.unsqueeze(1).unsqueeze(1), metadata).first.squeeze(1);
-    R.index_put_({torch::arange(B), goal_grid_pos.index({Slice(), 0}) + 1, goal_grid_pos.index({Slice(), 1}) + 1}, 0);
+    R.index_put_({torch::arange(B), goal_grid_pos.index({torch::indexing::Slice(), 0}) + 1, 
+                                    goal_grid_pos.index({torch::indexing::Slice(), 1}) + 1}, 0);
 
     // perform value iteration
     for (int i = 0; i < nx + ny; ++i) {
@@ -113,7 +115,8 @@ namespace utils
                                 costmap}, 1);
 
         // handle terminal state
-        V.index_put_({torch::arange(B), goal_grid_pos.index({Slice(), 0}+1), goal_grid_pos.index({Slice(), 1})+1}, 0);
+        V.index_put_({torch::arange(B), goal_grid_pos.index({torch::indexing::Slice(), 0}+1), 
+                                        goal_grid_pos.index({torch::indexing::Slice(), 1})+1}, 0);
 
         auto V_stay = V.slice(2, 1, -1).slice(3, 1, -1);
         auto V_up = V.slice(2, 2, torch::indexing::None).slice(3, 1, -1);
@@ -127,8 +130,8 @@ namespace utils
         // auto Qsa = R.slice(1, 1, -1).slice(2, 1, -1).unsqueeze(1) + gamma * Vs_next;
 
         auto Vnext = std::get<0>(torch::min(Qsa, 1));
-        Vnext.index_put_({torch::arange(B), goal_grid_pos.index({Slice(), 0}), 
-                                            goal_grid_pos.index({Slice(), 1})}, 0);
+        Vnext.index_put_({torch::arange(B), goal_grid_pos.index({torch::indexing::Slice(), 0}), 
+                                            goal_grid_pos.index({torch::indexing::Slice(), 1})}, 0);
 
         auto err = torch::abs(V.slice(2, 1, -1).slice(3, 1, -1) - Vnext).max();
         if (err.item<double>() < tol)

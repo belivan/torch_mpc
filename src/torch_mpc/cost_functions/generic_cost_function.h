@@ -27,8 +27,12 @@ private:
     torch::Device device;
 
 public:
-    std::unordered_map<std::string, std::variant<torch::Tensor,  // make mutable?
-    std::unordered_map<std::string, torch::Tensor>>> data;
+    std::unordered_map<std::string, 
+                    std::variant<torch::Tensor,
+                                std::unordered_map<std::string, 
+                                                std::variant<torch::Tensor,
+                                                        std::unordered_map<std::string,
+                                                                        torch::Tensor>>>>> data;
 
     CostFunction(const std::vector<std::pair<double, 
                 std::shared_ptr<CostTerm>>>& terms, 
@@ -77,10 +81,16 @@ public:
     }
 
     bool can_compute_cost() const {
-        for (const auto& v : data.values()) {
-            if (v.numel() == 0) {
-                return false;
-            }
+        for (const auto& [key, var] : data) {
+            if (std::holds_alternative<torch::Tensor>(var)){
+                const auto& tensor = std::get<torch::Tensor>(var);
+                if (!tensor.defined() || tensor.numel() == 0) {return false;}}
+            else if (std::holds_alternative<std::unordered_map<std::string, std::variant<torch::Tensor, 
+                                            std::unordered_map<std::string, torch::Tensor>>>>(var) ||
+                    std::holds_alternative<std::unordered_map<std::string, torch::Tensor>>(var) ||
+                    std::holds_alternative<std::unordered_map<std::string, std::unordered_map<std::string, torch::Tensor>>>>(var))
+            {continue;}
+            else {return false;}
         }
         return true;
     }

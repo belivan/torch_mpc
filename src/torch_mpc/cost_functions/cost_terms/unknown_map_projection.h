@@ -63,7 +63,7 @@ public:
         return cost;
     }
 
-    UnknownMapProjection& (const torch::Device& device) {
+    UnknownMapProjection& to(const torch::Device& device) override{
         this->device = device;
         return *this;
     }

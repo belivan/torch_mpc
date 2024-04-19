@@ -13,6 +13,7 @@ class CostTerm
         virtual ~CostTerm();
         virtual void get_data_keys() = 0;
         virtual void cost() = 0;
+        virtual void to() = 0;
 };
 
 #endif

@@ -3,8 +3,13 @@
 
 #include <torch/torch.h>
 #include <string>
-#include <utils.h> // THIS IS ASSUMING THAT WE ARE GOING TO MAKE A UTILS.H AAAAA
+#include "utils.h" // THIS IS ASSUMING THAT WE ARE GOING TO MAKE A UTILS.H AAAAA, Done!
 #include "base.h"
+#include <vector>
+#include <iostream>
+#include <cmath>
+#include <string>
+#include <utility>
 
 /*
     TODO: make sure to include--
@@ -105,11 +110,11 @@ public:
 
     //     return std::make_pair(cost, new_feasible)
     // }
-    std::pair<torch::Tensor, torch::Tensor> cost(torch::Tensor states, torch::Tensor actions, 
-                                                torch::Tensor feasible, torch::Tensor data) override
-    {
+    std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions, 
+                                                const torch::Tensor& feasible, cosnt torch::Tensor& data) override
+    {               // DATA IS CHANGING
         // move to local frame if necessary
-        torch::Tensor states2 = local_frame ? move_to_local_frame(states) : states;
+        torch::Tensor states2 = local_frame ? utils::move_to_local_frame(states) : states;
 
         // zeros init
         torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
@@ -126,7 +131,7 @@ public:
 
         // footprint -> grid positions
         torch::Tensor grid_pos, invalid_mask;
-        std::tie(grid_pos, invalid_mask) = world_to_grid(footprint_pos, metadata); // Assuming you have implemented world_to_grid function
+        std::tie(grid_pos, invalid_mask) = utils::world_to_grid(footprint_pos, metadata); // Assuming you have implemented world_to_grid function
 
         // roboaxes
         grid_pos = grid_pos.index({torch::indexing::Ellipsis, {1, 0}});
@@ -155,12 +160,11 @@ public:
         return *this;
     }
 
-    std::string __repr__() const override
+    friend std::ostream& operator<<(std::ostream& os, const FootprintCostmapProjection& fcp)
     {
-        return "Costmap Projection";
+        os << "Footprint Costmap Projection";
+        return os;
     }
-
-;
-}
+};
 
 #endif

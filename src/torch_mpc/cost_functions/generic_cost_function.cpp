@@ -57,9 +57,39 @@ int main() {
             )
     };
 
+    std::cout << cfn.can_compute_cost() << std::endl;
+    cfn.data["local_speedmap"] = data_holder{
+        std::make_pair(
+            "data", torch::zeros({3, 100, 100})
+            ),
+        std::make_pair(
+            "metadata", metadata{
+                std::make_pair(
+                    {"resolution", torch::tensor({1.0, 0.5, 2.0})}
+                    ),
+                std::make_pair(
+                    {"width", torch::tensor({100., 50., 200.})}
+                ),
+                std::make_pair(
+                    {"height", torch::tensor({100., 50., 200.})}
+                ),
+                std::make_pair(
+                    {"origin", torch::tensor({{-50., -50.}, {-25., -25.}, {-100., -100.}})}
+                ),
+                std::make_pair(
+                    {"length_x", torch::tensor({100., 50., 200.})}
+                ),
+                std::make_pair(
+                    {"length_y", torch::tensor({100., 50., 200.})}
+                )
+            }
+            )
+    };
+    std::cout << cfn.can_compute_cost() << std::endl;
+
     // Simulate states and actions
     auto states = torch::zeros({3, 4, 100, 5});
-    states.index({"...", 0, "...", 0}) = torch::linspace(0, 60, 100).unsqueeze(0).unsqueeze(0);
+    states.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
 
     auto actions = torch::zeros({3, 4, 100, 2});
 

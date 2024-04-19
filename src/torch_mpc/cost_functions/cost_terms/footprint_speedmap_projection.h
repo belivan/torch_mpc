@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cmath>
 #include "base.h"
+#include "utils.h"
 #include <string>
 #include <utility>
 
@@ -22,15 +23,15 @@ class FootprintSpeedmapProjection : public CostTerm
         double length_offset;
         double width_offset;
         bool local_frame;
-        std::vector<std::string> speedmap_key; // unsure if this should be a vector
-        torch::Device device;
+        const std::vector<std::string> speedmap_key; // unsure if this should be a vector
+        const torch::Device device;
         torch::Tensor footprint;
 
     public:
         FootprintSpeedmapProjection(int speed_idx=3, double speed_margin=1.0, double sharpness=5.0, 
                                     double length=5.0, double width=3.0, int nl=3, 
                                     int nw=3, double length_offset=-1.0, double width_offset=0.0, bool local_frame= false,
-                                    std::string speedmap_key="local", torch::Device device=torch::kCPU){
+                                    const std::vector<std::string>& speedmap_key="local_speedmap", const torch::Device& device=torch::kCPU){
             // Args:
             // speed_idx: idx of state containing speed
             // speed_margin: actually command speedmap-this speed 
@@ -102,12 +103,14 @@ class FootprintSpeedmapProjection : public CostTerm
         }
 
         std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions, 
-                        const torch::Tensor& feasible, const std::unordered_map<std::string, torch::Tensor>& data) override
-        {
+                        const torch::Tensor& feasible, const std::unordered_map<std::string, 
+                                                            std::unordered_map<std::string, std::variable<torch::Tensor,
+                                                            std::unordered_map<std::string, torch::Tensor>>>>& data) override
+        {  // DATA IS CHANGINGSS
             torch::Tensor states2;
             if (local_frame)
             {
-                states2 = move_to_local_frame(states); // implement this function
+                states2 = utils::move_to_local_frame(states);
             }
             else
             {
@@ -116,16 +119,18 @@ class FootprintSpeedmapProjection : public CostTerm
 
             torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
 
-            // torch::Tensor speedmap = data.at(speedmap_key)["data"]; //Fix this
-            // torch::Tensor metadata = data.at(speedmap_key)["metadata"];
+            torch::Tensor speedmap = data.at(speedmap_key).at("data"); //Check this
+            torch::Tensor metadata = data.at(speedmap_key).at("metadata"); //Check this
 
-            torch::Tensor world_pos = states2.index({"...", Slice(), Slice(None, 3)});
+            torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(), 
+                                                            torch::indexing::Slice(torch::None, 3)});
             torch::Tensor footprint_pos = apply_footprint(world_pos);
-            auto results = world_to_grid(footprint_pos, metadata);
+            auto results = utils::world_to_grid(footprint_pos, metadata);
             torch::Tensor grid_pos = std::get<0>(results);
             torch::Tensor invalid_mask = std::get<1>(results);
 
-            grid_pos = grid_pos.index({"...", Slice(), Slice(), {1,0}});
+            grid_pos = grid_pos.index({"...", torch::indexing::Slice(),
+                                                torch::indexing::Slice(), {1,0}});
             
             grid_pos.index_put_({invalid_mask}, 0);
             grid_pos = grid_pos.to(torch::kLong);
@@ -139,8 +144,8 @@ class FootprintSpeedmapProjection : public CostTerm
             idx0 = idx0.view(shape);
 
             auto ref_speeds = torch::clone(speedmap.index({idx0, 
-                                                            grid_pos.index({"...", Slice(), 0}), 
-                                                            grid_pos.index({"...", Slice(), 1})}));
+                                                    grid_pos.index({"...", torch::indexing::Slice(), 0}), 
+                                                    grid_pos.index({"...", torch::indexing::Slice(), 1})}));
             ref_speeds.index_put_({invalid_mask}, 1e10);
 
             ref_speeds = std::get<0>(ref_speeds.min(-1));
