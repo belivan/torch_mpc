@@ -13,22 +13,23 @@ class EuclideanDistanceToGoal : public CostTerm
 {
     private:
         double goal_radius;
-        std::vector<std::string> goal_key;
-        torch::Device device;
+        const std::vector<std::string> goal_key;
+        const torch::Device device;
         unsigned int num_goals = 2;
 
     public:
-        EuclideanDistanceToGoal(double goal_radius = 2.0, std::string goal_key = "waypoints", 
-                                torch::Device device = torch::kCPU) : goal_radius(goal_radius), goal_key(goal_key), device(device) {}
+        EuclideanDistanceToGoal(double goal_radius = 2.0, cosnt std::string& goal_key = "waypoints", 
+                                const torch::Device& device = torch::kCPU) : goal_radius(goal_radius), goal_key(goal_key), device(device) {}
         ~EuclideanDistanceToGoal() = default;
 
-        std::vector<std::string> get_data_keys() override
+        std::vector<std::string> get_data_keys() const override
         {
             return goal_key;
         }
 
-        std::pair cost(torch::Tensor states, torch::Tensor actions,
-                    bool feasable, torch::Tensor data) override
+        std::pair cost(const torch::Tensor& states, const torch::Tensor& actions,
+                    const torch::Tensor& feasable, 
+                    const const std::unordered_map<std::string, torch::Tensor>& data) override
         {
             torch::Tensor cost = torch.zeros({states.size(0), states.size(1)},
                                             torch::TensorOptions().device(device));
@@ -65,7 +66,7 @@ class EuclideanDistanceToGoal : public CostTerm
             return std::make_pair(cost, new_feasible);
         }
 
-        EuclideanDistanceToGoal& to(torch::Device device) override
+        EuclideanDistanceToGoal& to(const torch::Device& device) override
         {
             this->device = device;
             return *this;

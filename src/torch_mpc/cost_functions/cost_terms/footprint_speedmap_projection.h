@@ -9,7 +9,7 @@
 #include <string>
 #include <utility>
 
-class FoorprintSpeedmapProjection : public CostTerm
+class FootprintSpeedmapProjection : public CostTerm
 {
     private:
         int speed_idx;
@@ -27,7 +27,7 @@ class FoorprintSpeedmapProjection : public CostTerm
         torch::Tensor footprint;
 
     public:
-        FoorprintSpeedmapProjection(int speed_idx=3, double speed_margin=1.0, double sharpness=5.0, 
+        FootprintSpeedmapProjection(int speed_idx=3, double speed_margin=1.0, double sharpness=5.0, 
                                     double length=5.0, double width=3.0, int nl=3, 
                                     int nw=3, double length_offset=-1.0, double width_offset=0.0, bool local_frame= false,
                                     std::string speedmap_key="local", torch::Device device=torch::kCPU){
@@ -58,7 +58,7 @@ class FoorprintSpeedmapProjection : public CostTerm
             footprint = make_footprint();
         }
 
-        ~FoorprintSpeedmapProjection() = default;
+        ~FootprintSpeedmapProjection() = default;
 
         torch::Tensor make_footprint()
         {
@@ -163,16 +163,17 @@ class FoorprintSpeedmapProjection : public CostTerm
             return std::make_pair(cost, new_feasible);
         }
 
-        FoorprintSpeedmapProjection& to(torch::Device device) override
+        FootprintSpeedmapProjectionn& to(torch::Device device) override
         {
             this->footprint = footprint.to(device);
             this->device = device;
             return *this;
         }
 
-        std::string __repr__() const override
+        friend std::ostream& operator<<(std::ostream& os, const FootprintSpeedmapProjection& fsp)
         {
-            return "Speedmap Projection";
+            os << "Footprint Speedmap Projection";
+            return os;
         }
 };
 

@@ -8,6 +8,8 @@
 #include <string>
 #include <unordered_map>
 #include <functional>
+#include "cost_terms/base.h"
+#include <variant>
 
 class CostFunction {
 /*
@@ -25,7 +27,9 @@ private:
     torch::Device device;
 
 public:
-    std::unordered_map<std::string, torch::Tensor> data;
+    std::unordered_map<std::string, std::variant<torch::Tensor,  // make mutable?
+    std::unordered_map<std::string, torch::Tensor>>> data;
+
     CostFunction(const std::vector<std::pair<double, 
                 std::shared_ptr<CostTerm>>>& terms, 
                 const torch::Device& device = torch::kCPU)
@@ -44,7 +48,8 @@ public:
         }
     }
 
-    std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions) {
+    std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, 
+                                                const torch::Tensor& actions) {
         /*
         Produce costs from states, actions
         Args:

@@ -5,13 +5,12 @@
 //     2. Actually compute cost values given:
 //         a. A [B1 x B2 x T x N] tensor of states
 //         b. A [B1 x B2 x T x M] tensor of actions
-
-//     Note that we assume two batch dimensions as we often want to perform multiple sampling-based opts in parallel
+// Note that we assume two batch dimensions as we often want to perform multiple sampling-based opts in parallel
 class CostTerm
 {
     public:
-        CostTerm() = default;
-        virtual ~CostTerm() = default;
+        CostTerm(){};
+        virtual ~CostTerm();
         virtual void get_data_keys() = 0;
         virtual void cost() = 0;
 };
