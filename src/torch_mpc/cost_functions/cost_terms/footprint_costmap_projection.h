@@ -94,8 +94,8 @@ public:
         torch::Tensor states2 = local_frame ? utils::move_to_local_frame(states) : states;
         // zeros init
         torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
-        torch::Tensor costmap = utils::get_key_tensor(data, costmap_key[0]);
-        std::unordered_map<std::string, torch::Tensor> metadata = utils::get_metadata_map(data, costmap_key[0]);
+        torch::Tensor costmap = utils::get_key_data_tensor(data, costmap_key[0]);
+        std::unordered_map<std::string, torch::Tensor> metadata = utils::get_key_metadata_map(data, costmap_key[0]);
         // get world_pos
         torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(0, 3)});
         // get the footprint

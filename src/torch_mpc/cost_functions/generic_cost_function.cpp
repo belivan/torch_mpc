@@ -26,8 +26,8 @@ int main() {
     torch::Tensor goal3 = torch::tensor({{6.0, 0.0}, {4.0, 0.0}});
 
     auto goals= torch::stack({goal1, goal2, goal3}, 0);
-    data.waypoints = goals;
-    data.goals = goals;
+    data.data = goals;
+    data.data = goals;
     
     cfn.data.keys["waypoints"] = data;
 

@@ -19,8 +19,8 @@ struct Metadata {
 struct Data { // insert whatever you want here
     torch::Tensor data;
     Metadata metadata;
-    torch::Tensor goals;
-    torch::Tensor waypoints;
+    // torch::Tensor goals;
+    // torch::Tensor waypoints;
 };
 // TOP LEVEL INTERFACE TO USE: CostKeyDataHolder
 struct CostKeyDataHolder { // usually stores cost keys and whatever data

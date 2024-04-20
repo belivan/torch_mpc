@@ -169,12 +169,12 @@ namespace utils
         return V.slice(2, 1, -1).slice(3, 1, -1);
     }
 
-    std::unordered_map<std::string, torch::Tensor> get_metadata_map (const CostKeyDataHolder& data, 
+    std::unordered_map<std::string, torch::Tensor> get_key_metadata_map (const CostKeyDataHolder& data, 
                                                                 const std::string& key) {
         return data.keys.at(key).metadata.fields;
     }
 
-    torch::Tensor get_key_tensor (const CostKeyDataHolder& data, 
+    torch::Tensor get_key_data_tensor (const CostKeyDataHolder& data, 
                                 const std::string& key) {
         return data.keys.at(key).data;
     }
