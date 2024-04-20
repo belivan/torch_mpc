@@ -10,7 +10,8 @@
 #include <functional>
 #include "cost_terms/base.h"
 #include <variant>
-
+#include <set>
+#include <algorithm>
 class CostFunction {
 /*
 High level cost-term aggregator that all MPC should be using to get the costs of trajectories
@@ -27,12 +28,9 @@ private:
     torch::Device device;
 
 public:
-    std::unordered_map<std::string, 
-                    std::variant<torch::Tensor,
-                                std::unordered_map<std::string, 
-                                                std::variant<torch::Tensor,
-                                                        std::unordered_map<std::string,
-                                                                        torch::Tensor>>>>> data;
+    std::unordered_map<std::string, std::variant<torch::Tensor,
+    std::unordered_map<std::string, std::variant<torch::Tensor,
+    std::unordered_map<std::string, torch::Tensor>>>>> data;
 
     CostFunction(const std::vector<std::pair<double, 
                 std::shared_ptr<CostTerm>>>& terms, 
@@ -63,8 +61,9 @@ public:
         auto costs = torch::zeros({states.size(0), states.size(1)}, states.options());
         auto feasible = torch::ones({states.size(0), states.size(1)}, torch::kBool).to(device);
 
+        //torch::Tensor new_cost, new_feasible;
         for (size_t i = 0; i < cost_terms.size(); ++i) {
-            auto [new_cost, new_feasible] = cost_terms[i]->cost(states, actions, feasible, data);
+            auto[new_cost, new_feasible] = cost_terms[i]->cost(states, actions, feasible, data);
             costs += cost_weights[i] * new_cost;
             feasible = feasible.logical_and(new_feasible);
         }
@@ -88,7 +87,7 @@ public:
             else if (std::holds_alternative<std::unordered_map<std::string, std::variant<torch::Tensor, 
                                             std::unordered_map<std::string, torch::Tensor>>>>(var) ||
                     std::holds_alternative<std::unordered_map<std::string, torch::Tensor>>(var) ||
-                    std::holds_alternative<std::unordered_map<std::string, std::unordered_map<std::string, torch::Tensor>>>>(var))
+                    std::holds_alternative<std::unordered_map<std::string, std::unordered_map<std::string, torch::Tensor>>>(var))
             {continue;}
             else {return false;}
         }
@@ -111,4 +110,4 @@ public:
     }
 };
 
-#endif // COST_FUNCTION_H
+#endif // GENERIC_COST_FUNCTION_IS_INCLUDED

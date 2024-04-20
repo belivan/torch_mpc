@@ -2,13 +2,9 @@
 #define FOOTPRINT_COSTMAP_PROJECTION_IS_INCLUDED
 
 #include <torch/torch.h>
-#include <string>
 #include "utils.h" // THIS IS ASSUMING THAT WE ARE GOING TO MAKE A UTILS.H AAAAA, Done!
 #include "base.h"
-#include <vector>
-#include <iostream>
 #include <cmath>
-#include <string>
 #include <utility>
 
 /*
@@ -28,15 +24,14 @@ private:
     float cost_thresh, length, width, length_offset, width_offset;
     int nl, nw; 
     bool local_frame;
-    const std::vector<std::string> costmap_key;
-    const torch::Device device;
+    std::vector<std::string> costmap_key;
+    torch::Device device;
     torch::Tensor footprint;
 
 public:
-
     FootprintCostmapProjection(float cost_thresh = 1e10, float length = 5.0, float width = 3.0, int nl = 3, int nw = 3, 
                             float length_offset = -1.0, float width_offset = 0.0, bool local_frame = false, 
-                            const std::vector<std::string>& costmap_key = "local_costmap", const torch::Device& device = torch::kCPU)
+                            const std::vector<std::string>& costmap_key = {"local_costmap"}, const torch::Device& device = torch::kCPU)
     : cost_thresh(cost_thresh), length(length), width(width), nl(nl), nw(nw), length_offset(length_offset), 
         width_offset(width_offset), local_frame(local_frame), costmap_key(costmap_key), 
         device(device)
@@ -110,9 +105,14 @@ public:
 
     //     return std::make_pair(cost, new_feasible)
     // }
-    std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions, 
-                                                const torch::Tensor& feasible, cosnt torch::Tensor& data) override
-    {               // DATA IS CHANGING
+    std::pair<torch::Tensor, torch::Tensor> cost(
+        const torch::Tensor& states, 
+        const torch::Tensor& actions, 
+        const torch::Tensor& feasible, 
+        const std::unordered_map<std::string, std::variant<torch::Tensor,
+              std::unordered_map<std::string, std::variant<torch::Tensor,
+              std::unordered_map<std::string, torch::Tensor>>>>>& data) override
+    {
         // move to local frame if necessary
         torch::Tensor states2 = local_frame ? utils::move_to_local_frame(states) : states;
 
@@ -120,8 +120,13 @@ public:
         torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
 
         // get costmap/metadata from data
-        torch::Tensor costmap = data[costmap_key + "_data"];
-        torch::Tensor metadata = data[costmap_key + "_metadata"];
+        torch::Tensor speedmap = std::get<torch::Tensor>(std::get<std::unordered_map<std::string, std::variant<
+                                                                      std::unnordered_map<std::string, torch::Tensor>>>>(
+                                                                        data.at(costmap_key[0])).at("data"));
+        torch::Tensor metadata = std::get<std::unordered_map<std::string, torch::Tensor>>(
+                                            std::get<std::unordered_map<std::string, std::variant<
+                                                     std::unordered_map<std::string, torch::Tensor>>>>(                               
+                                                            data.at(costmap_key[0])).at("metadata"));
 
         // get world_pos
         torch::Tensor world_pos = states2.index({torch::indexing::Ellipsis, torch::indexing::Slice(torch::None, 3)}); // Assuming the last dimension contains x, y, and th
@@ -160,11 +165,13 @@ public:
         return *this;
     }
 
-    friend std::ostream& operator<<(std::ostream& os, const FootprintCostmapProjection& fcp)
-    {
-        os << "Footprint Costmap Projection";
-        return os;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const FootprintCostmapProjection& fcp);
 };
 
-#endif
+std::ostream& operator<<(std::ostream& os, const FootprintCostmapProjection& fcp)
+{
+    os << "Footprint Costmap Projection";
+    return os;
+}
+
+#endif // FOOTPRINT_COSTMAP_PROJECTION_IS_INCLUDED

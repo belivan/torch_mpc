@@ -56,7 +56,7 @@ def world_to_grid(world_pos, metadata):
     ox = metadata['origin'][:, 0]
     oy = metadata['origin'][:, 1]
 
-    trailing_dims = [1] * (world_pos.ndim-2)
+    trailing_dims = [1] * (world_pos.ndim - 2)
 
     gx = (world_pos[..., 0] - ox.view(-1, *trailing_dims)) / res.view(-1, *trailing_dims)
     gy = (world_pos[..., 1] - oy.view(-1, *trailing_dims)) / res.view(-1, *trailing_dims)
