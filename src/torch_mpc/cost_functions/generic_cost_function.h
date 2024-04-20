@@ -42,7 +42,7 @@ public:
             cost_weights.push_back(term.first);
             cost_terms.push_back(term.second);
         }
-        for (const auto& key : get_data_keys()) { // double check double key function
+        for (const auto& key : get_data_keys()) {
             data.keys[key].data = torch::Tensor();  // Initialize with empty tensors, don't forget to check data
         }
     }
