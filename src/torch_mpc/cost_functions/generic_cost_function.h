@@ -84,12 +84,6 @@ public:
             if (key_values.second.metadata.fields.size() > 0) {
                 continue;
             }
-            if (key_values.second.goals.defined() && key_values.second.goals.numel() > 0) {
-                continue;
-            }
-            if (key_values.second.waypoints.defined() && key_values.second.waypoints.numel() > 0) {
-                continue;
-            }
             return false;
         }
         return true;
