@@ -133,7 +133,7 @@ class FootprintSpeedmapProjection : public CostTerm
                                                     grid_pos.index({"...", torch::indexing::Slice(), 0}), 
                                                     grid_pos.index({"...", torch::indexing::Slice(), 1})}));
 
-            ref_speeds.index_put_({invalid_mask}, 1e10);
+            ref_speeds.index_put_({invalid_mask}, 1e10);  // should be 0 I think
 
             ref_speeds = std::get<0>(ref_speeds.min(-1));
 
