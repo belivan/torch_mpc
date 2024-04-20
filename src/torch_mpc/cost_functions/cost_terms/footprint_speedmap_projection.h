@@ -105,7 +105,7 @@ class FootprintSpeedmapProjection : public CostTerm
 
             torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
 
-            torch::Tensor speedmap = utils::get_data_tensor(data, speedmap_key[0]);
+            torch::Tensor speedmap = utils::get_key_tensor(data, speedmap_key[0]);
             std::unordered_map<std::string, torch::Tensor> metadata = utils::get_metadata_map(data, speedmap_key[0]);
 
             torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(), 

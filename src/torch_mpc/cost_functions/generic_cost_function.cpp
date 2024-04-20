@@ -4,102 +4,63 @@
 #include "cost_terms/footprint_speedmap_projection.h"
 
 int main() {
-    // std::vector<std::pair<double, std::shared_ptr<CostTerm>>> cost_terms = {
-    //     {2.0, std::make_shared<EuclideanDistanceToGoal>()},
-    //     {1.0, std::make_shared<FootprintSpeedmapProjection>()}
-    //     {1.0, std::make_shared<FootprintCostmapProjection>()}
-    // };
+    std::vector<std::pair<double, std::shared_ptr<CostTerm>>> cost_terms = {
+        {2.0, std::make_shared<EuclideanDistanceToGoal>()},
+        {1.0, std::make_shared<FootprintSpeedmapProjection>()},
+        {1.0, std::make_shared<FootprintCostmapProjection>()}
+    };
 
-    // torch::Device device = torch::kCPU;
+    torch::Device device = torch::kCPU;
 
-    // CostFunction cfn(cost_terms, device);
+    CostFunction cfn(cost_terms, device);
 
-    // std::cout << cfn.can_compute_cost() << std::endl;
+    Data data;
 
-    // // Simulate data loading
-    // cf.data["goals"] = torch::tensor(torch::stack({
-    //                                 torch::tensor({{5.0, 0.0}, {10.0, 0.0}}), 
-    //                                 torch::tensor({{3.0, 0.0}, {4.0, 0.0}}), 
-    //                                 torch::tensor({{6.0, 0.0}, {4.0, 0.0}})
-    //                                 }, 0));
+    std::cout << cfn.can_compute_cost() << std::endl;
 
-    // cf.data["waypoints"] = torch::tensor(torch::stack({
-    //                                 torch::tensor({{5.0, 0.0}, {10.0, 0.0}}), 
-    //                                 torch::tensor({{3.0, 0.0}, {4.0, 0.0}}), 
-    //                                 torch::tensor({{6.0, 0.0}, {4.0, 0.0}})
-    //                                 }, 0));
+    // Simulate data loading
+    torch::Tensor goal1 = torch::tensor({{5.0, 0.0}, {10.0, 0.0}});
+    torch::Tensor goal2 = torch::tensor({{3.0, 0.0}, {4.0, 0.0}});
+    torch::Tensor goal3 = torch::tensor({{6.0, 0.0}, {4.0, 0.0}});
 
-    // std::cout << cfn.can_compute_cost() << std::endl;
+    auto goals= torch::stack({goal1, goal2, goal3}, 0);
+    data.waypoints = goals;
+    data.goals = goals;
+    
+    cfn.data.keys["waypoints"] = data;
 
-    // // std::unordered_map<std::string, std::variant<torch::Tensor, std::unordered_map<std::string, torch::Tensor>>> data_holder;
-    // // std::unordered_map<std::string, torch::Tensor> data;
-    // // std::unordered_map<std::string, torch::Tensor> metadata;
-    // cfn.data["local_costmap"] = data_holder{
-    //     std::make_pair(
-    //         "data", torch::zeros({3, 100, 100})
-    //         ),
-    //     std::make_pair(
-    //         "metadata", metadata{
-    //             std::make_pair(
-    //                 {"resolution", torch::tensor({1.0, 0.5, 2.0})}
-    //                 ),
-    //             std::make_pair(
-    //                 {"width", torch::tensor({100., 50., 200.})}
-    //             ),
-    //             std::make_pair(
-    //                 {"height", torch::tensor({100., 50., 200.})}
-    //             ),
-    //             std::make_pair(
-    //                 {"origin", torch::tensor({{-50., -50.}, {-25., -25.}, {-100., -100.}})}
-    //             ),
-    //             std::make_pair(
-    //                 {"length_x", torch::tensor({100., 50., 200.})}
-    //             ),
-    //             std::make_pair(
-    //                 {"length_y", torch::tensor({100., 50., 200.})}
-    //             )
-    //         }
-    //         )
-    // };
+    Data data2 = data;
+    cfn.data.keys["goals"] = data2;
 
-    // std::cout << cfn.can_compute_cost() << std::endl;
-    // cfn.data["local_speedmap"] = data_holder{
-    //     std::make_pair(
-    //         "data", torch::zeros({3, 100, 100})
-    //         ),
-    //     std::make_pair(
-    //         "metadata", metadata{
-    //             std::make_pair(
-    //                 {"resolution", torch::tensor({1.0, 0.5, 2.0})}
-    //                 ),
-    //             std::make_pair(
-    //                 {"width", torch::tensor({100., 50., 200.})}
-    //             ),
-    //             std::make_pair(
-    //                 {"height", torch::tensor({100., 50., 200.})}
-    //             ),
-    //             std::make_pair(
-    //                 {"origin", torch::tensor({{-50., -50.}, {-25., -25.}, {-100., -100.}})}
-    //             ),
-    //             std::make_pair(
-    //                 {"length_x", torch::tensor({100., 50., 200.})}
-    //             ),
-    //             std::make_pair(
-    //                 {"length_y", torch::tensor({100., 50., 200.})}
-    //             )
-    //         }
-    //         )
-    // };
-    // std::cout << cfn.can_compute_cost() << std::endl;
+    std::cout << cfn.can_compute_cost() << std::endl;
 
-    // // Simulate states and actions
-    // auto states = torch::zeros({3, 4, 100, 5});
-    // states.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
+    Metadata metadata;
+    metadata.fields["resolution"] = torch::tensor({1.0, 0.5, 2.0});
+    metadata.fields["width"] = torch::tensor({100., 50., 200.});
+    metadata.fields["height"] = torch::tensor({100., 50., 200.});
+    metadata.fields["origin"] = torch::tensor({{-50., -25., -100.}, {-50., -25., -100.}});
+    metadata.fields["length_x"] = torch::tensor({100., 50., 200.});
+    metadata.fields["length_y"] = torch::tensor({100., 50., 200.});
 
-    // auto actions = torch::zeros({3, 4, 100, 2});
+    Data data3 = data;
+    data3.data = torch::zeros({3, 100, 100});
+    data3.metadata = metadata;
 
-    // auto [costs, feasible] = cfn.cost(states, actions);
-    // std::cout << "Costs:\n" << costs << "\nFeasible:\n" << feasible << std::endl;
+    cfn.data.keys["local_costmap"] = data3;
+    std::cout << cfn.can_compute_cost() << std::endl;
+
+    Data data4 = data3;
+    cfn.data.keys["local_speedmap"] = data3;
+    std::cout << cfn.can_compute_cost() << std::endl;
+
+    // Simulate states and actions
+    auto states = torch::zeros({3, 4, 100, 5});
+    states.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
+
+    auto actions = torch::zeros({3, 4, 100, 2});
+
+    auto [costs, feasible] = cfn.cost(states, actions);
+    std::cout << "Costs:\n" << costs << "\nFeasible:\n" << feasible << std::endl;
 
     return 0;
 }

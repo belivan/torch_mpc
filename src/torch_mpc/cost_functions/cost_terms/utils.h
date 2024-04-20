@@ -171,63 +171,12 @@ namespace utils
 
     std::unordered_map<std::string, torch::Tensor> get_metadata_map (const CostKeyDataHolder& data, 
                                                                 const std::string& key) {
-        // auto costmap = std::get<MidMap>(data.keys.at(key).one);
-        // return std::get<DeepMap>(costmap.data.at("metadata")).metadata;
-
-        try {
-            const auto& tensor_or_midmap = data.keys.at(key);
-            const MidMap& mid_map = std::get<MidMap>(tensor_or_midmap.one);
-
-            const auto& tensor_or_deepmap = mid_map.data.at("metadata");
-            const DeepMap& deep_map = std::get<DeepMap>(tensor_or_deepmap.two);
-
-            return deep_map.metadata;
-        } catch (const std::bad_variant_access& e) {
-            std::cerr << "Bad variant access: " << e.what() << '\n';
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Key error: " << e.what() << '\n';
-        }
-        return {};
-    }
-
-    torch::Tensor get_data_tensor (const CostKeyDataHolder& data, 
-                                const std::string& key) {
-        // auto costmap = std::get<MidMap>(data.keys.at(key).one);
-        // return std::get<torch::Tensor>(costmap.data.at("data"));
-        try {
-            const auto& tensor_or_midmap = data.keys.at(key);
-            const MidMap& mid_map = std::get<MidMap>(tensor_or_midmap.one);
-
-            const auto& tensor_or_deepmap = mid_map.data.at("data");
-            return std::get<torch::Tensor>(tensor_or_deepmap.two);
-        } catch (const std::bad_variant_access& e) {
-            std::cerr << "Bad variant access: " << e.what() << '\n';
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Key error: " << e.what() << '\n';
-        }
+        return data.keys.at(key).metadata.fields;
     }
 
     torch::Tensor get_key_tensor (const CostKeyDataHolder& data, 
                                 const std::string& key) {
-        // return std::get<torch::Tensor>(data.keys.at(key).one);
-        try{
-            return std::get<torch::Tensor>(data.keys.at(key).one);
-        } catch (const std::bad_variant_access& e) {
-            std::cerr << "Bad variant access: " << e.what() << '\n';
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Key error: " << e.what() << '\n';
-        }
-    }
-
-    torch::Tensor get_goals_tensor (const CostKeyDataHolder& data) {
-        // return std::get<torch::Tensor>(data.keys.at("goals").one);
-        try {
-            return std::get<torch::Tensor>(data.keys.at("goals").one);
-        } catch (const std::bad_variant_access& e) {
-            std::cerr << "Bad variant access: " << e.what() << '\n';
-        } catch (const std::out_of_range& e) {
-            std::cerr << "Key error: " << e.what() << '\n';
-        }
+        return data.keys.at(key).data;
     }
 };
 

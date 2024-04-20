@@ -13,43 +13,30 @@
 #include <unordered_map>
 #include <variant>
 
-struct DeepMap { // usually stores metadata
-    std::unordered_map<std::string, torch::Tensor> metadata;
+struct Metadata {
+    std::unordered_map<std::string, torch::Tensor> fields;
 };
-struct TensorOrDeepMap { // interface two
-    std::variant<torch::Tensor, DeepMap> two;
+struct Data { // insert whatever you want here
+    torch::Tensor data;
+    Metadata metadata;
+    torch::Tensor goals;
+    torch::Tensor waypoints;
 };
-
-struct MidMap { // usually stores data or metadata
-    std::unordered_map<std::string, TensorOrDeepMap> data;
-};
-struct TensorOrMidMap { // interface one
-    std::variant<torch::Tensor, MidMap> one;
-};
-
 // TOP LEVEL INTERFACE TO USE: CostKeyDataHolder
 struct CostKeyDataHolder { // usually stores cost keys and whatever data
-    std::unordered_map<std::string, TensorOrMidMap> keys;
-    TensorOrMidMap& operator[](const std::string& key) {
-        return keys[key];
-    }
+    std::unordered_map<std::string, Data> keys;
 };
 class CostTerm
 {
     public:
         CostTerm(){};
-        virtual ~CostTerm();
+        // virtual ~CostTerm();
         virtual std::vector<std::string> get_data_keys() const = 0;
         virtual std::pair<torch::Tensor, torch::Tensor> cost(
             const torch::Tensor& states, 
             const torch::Tensor& actions, 
             const torch::Tensor& feasible, 
-            // const std::unordered_map<std::string, std::variant<torch::Tensor,
-            //       std::unordered_map<std::string, std::variant<torch::Tensor,
-            //       std::unordered_map<std::string, torch::Tensor>>>>>& data) = 0;
             const CostKeyDataHolder& data) = 0;
-        // virtual std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions, 
-        //                const torch::Tensor& feasible, const std::unordered_map<std::string, torch::Tensor>& data) = 0;
         virtual CostTerm& to(const torch::Device& device) = 0;
         friend std::ostream& operator<<(std::ostream& os, const CostTerm& term);
 };
