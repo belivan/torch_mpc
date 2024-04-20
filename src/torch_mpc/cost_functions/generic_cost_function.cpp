@@ -10,7 +10,7 @@ int main() {
         {1.0, std::make_shared<FootprintCostmapProjection>()}
     };
 
-    torch::Device device = torch::kCPU;
+    torch::Device device = torch::kCPU;  // try torch::kCUDA later
 
     CostFunction cfn(cost_terms, device);
 
