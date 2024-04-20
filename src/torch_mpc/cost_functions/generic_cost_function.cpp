@@ -16,6 +16,7 @@ int main() {
 
     Data data;
 
+    std::cout << "Check 0" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
 
     // Simulate data loading
@@ -29,11 +30,15 @@ int main() {
     
     cfn.data.keys["waypoints"] = data;
 
+    std::cout << "Check 1" << std::endl;
+    std::cout << cfn.can_compute_cost() << std::endl;
+
     Data data2 = data;
     cfn.data.keys["goals"] = data2;
 
+    std::cout << "Check 2" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
-
+    
     Metadata metadata;
     metadata.fields["resolution"] = torch::tensor({1.0, 0.5, 2.0});
     metadata.fields["width"] = torch::tensor({100., 50., 200.});
@@ -47,12 +52,17 @@ int main() {
     data3.metadata = metadata;
 
     cfn.data.keys["local_costmap"] = data3;
+
+    std::cout << "Check 3" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
 
     Data data4 = data3;
     cfn.data.keys["local_speedmap"] = data3;
+
+    std::cout << "Check 4" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
 
+    std::cout << "Check 5 (Final)" << std::endl;
     // Simulate states and actions
     auto states = torch::zeros({3, 4, 100, 5});
     states.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
