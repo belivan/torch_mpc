@@ -12,6 +12,28 @@
 #include <string>
 #include <unordered_map>
 #include <variant>
+
+struct DeepMap { // usually stores metadata
+    std::unordered_map<std::string, torch::Tensor> metadata;
+};
+struct TensorOrDeepMap { // interface two
+    std::variant<torch::Tensor, DeepMap> two;
+};
+
+struct MidMap { // usually stores data or metadata
+    std::unordered_map<std::string, TensorOrDeepMap> data;
+};
+struct TensorOrMidMap { // interface one
+    std::variant<torch::Tensor, MidMap> one;
+};
+
+// TOP LEVEL INTERFACE TO USE: CostKeyDataHolder
+struct CostKeyDataHolder { // usually stores cost keys and whatever data
+    std::unordered_map<std::string, TensorOrMidMap> keys;
+    TensorOrMidMap& operator[](const std::string& key) {
+        return keys[key];
+    }
+};
 class CostTerm
 {
     public:
@@ -22,9 +44,10 @@ class CostTerm
             const torch::Tensor& states, 
             const torch::Tensor& actions, 
             const torch::Tensor& feasible, 
-            const std::unordered_map<std::string, std::variant<torch::Tensor,
-                  std::unordered_map<std::string, std::variant<torch::Tensor,
-                  std::unordered_map<std::string, torch::Tensor>>>>>& data) = 0;
+            // const std::unordered_map<std::string, std::variant<torch::Tensor,
+            //       std::unordered_map<std::string, std::variant<torch::Tensor,
+            //       std::unordered_map<std::string, torch::Tensor>>>>>& data) = 0;
+            const CostKeyDataHolder& data) = 0;
         // virtual std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions, 
         //                const torch::Tensor& feasible, const std::unordered_map<std::string, torch::Tensor>& data) = 0;
         virtual CostTerm& to(const torch::Device& device) = 0;

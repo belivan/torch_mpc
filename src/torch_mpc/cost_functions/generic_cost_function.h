@@ -26,11 +26,11 @@ private:
     std::vector<std::shared_ptr<CostTerm>> cost_terms;
     std::vector<double> cost_weights;
     torch::Device device;
-
 public:
-    std::unordered_map<std::string, std::variant<torch::Tensor,
-    std::unordered_map<std::string, std::variant<torch::Tensor,
-    std::unordered_map<std::string, torch::Tensor>>>>> data;
+    // std::unordered_map<std::string, std::variant<torch::Tensor,
+    // std::unordered_map<std::string, std::variant<torch::Tensor,
+    // std::unordered_map<std::string, torch::Tensor>>>>> data;
+    CostKeyDataHolder data;
 
     CostFunction(const std::vector<std::pair<double, 
                 std::shared_ptr<CostTerm>>>& terms, 
@@ -46,7 +46,7 @@ public:
             cost_terms.push_back(term.second);
         }
         for (const auto& key : get_data_keys()) { // double check double key function
-            data[key] = torch::Tensor();  // Initialize with empty tensors
+            data[key].one = torch::Tensor();  // Initialize with empty tensors
         }
     }
 
@@ -80,19 +80,29 @@ public:
     }
 
     bool can_compute_cost() const {
-        for (const auto& [key, var] : data) {
-            if (std::holds_alternative<torch::Tensor>(var)){
-                const auto& tensor = std::get<torch::Tensor>(var);
+        for (const auto& key_values : data.keys) {
+            const auto& tensor_or_map = key_values.second.one;
+            if (std::holds_alternative<torch::Tensor>(tensor_or_map)) {
+                const auto& tensor = std::get<torch::Tensor>(tensor_or_map);
                 if (!tensor.defined() || tensor.numel() == 0) {return false;}}
-            else if (std::holds_alternative<std::unordered_map<std::string, std::variant<torch::Tensor, 
-                                            std::unordered_map<std::string, torch::Tensor>>>>(var) ||
-                    std::holds_alternative<std::unordered_map<std::string, torch::Tensor>>(var) ||
-                    std::holds_alternative<std::unordered_map<std::string, std::unordered_map<std::string, torch::Tensor>>>(var))
-            {continue;}
-            else {return false;}
-        }
+            else if (std::holds_alternative<MidMap>(tensor_or_map)) {
+                const auto& mid_map = std::get<MidMap>(tensor_or_map);
+                if(mid_map.data.empty()) {return false;}}}
         return true;
     }
+    //     for (const auto& [key, var] : data) {
+    //         if (std::holds_alternative<torch::Tensor>(var)){
+    //             const auto& tensor = std::get<torch::Tensor>(var);
+    //             if (!tensor.defined() || tensor.numel() == 0) {return false;}}
+    //         else if (std::holds_alternative<std::unordered_map<std::string, std::variant<torch::Tensor, 
+    //                                         std::unordered_map<std::string, torch::Tensor>>>>(var) ||
+    //                 std::holds_alternative<std::unordered_map<std::string, torch::Tensor>>(var) ||
+    //                 std::holds_alternative<std::unordered_map<std::string, std::unordered_map<std::string, torch::Tensor>>>(var))
+    //         {continue;}
+    //         else {return false;}
+    //     }
+    //     return true;
+    // }
 
     void to(const std::string& device_type) {
         device = torch::Device(device_type);

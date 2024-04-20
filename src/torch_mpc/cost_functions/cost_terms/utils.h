@@ -2,12 +2,15 @@
 #define UTILS_IS_INCLUDED
 
 #include <torch/torch.h>
+#include "base.h"
 #include <vector>
 #include <iostream>
 #include <cmath>
 #include <string>
 #include <utility>
 #include <unordered_map>
+#include <exception>
+#include <variant>
 
 namespace utils
 {
@@ -99,7 +102,7 @@ namespace utils
 
     torch::Tensor value_iteration(const torch::Tensor& costmap, 
                             const std::unordered_map<std::string, torch::Tensor>& metadata, 
-                            const std::unordered_map<std::string, torch::Tensor>& goals, 
+                            const torch::Tensor& goals, 
                             double tol = 1e-4, double gamma = 1.0, int max_itrs = 1000) {
     /*
     Perform (batched) value iteration on a costmap
@@ -119,13 +122,8 @@ namespace utils
         R.slice(1, 1, -1).slice(2, 1, -1) = costmap;
 
         // load in goal point
-
-        // goals is an unordered_map, with strings as keys ("0", "1", "2", "3", "4")
-        auto goal_coords = torch::stack({goals.at("0"), 
-                                            goals.at("1"), 
-                                            goals.at("2"), 
-                                            goals.at("3"), 
-                                            goals.at("4")}, 0).view({B, 1, 1, 2});
+        // goals are 3D tensor with 2D goal tensors
+        auto goal_coords = goals.view({B, 1, 1, 2});
 
         auto goal_grid_pos = world_to_grid(goal_coords, metadata).first.view({B, 2}).index_select(-1, torch::tensor({1, 0}, torch::kLong));
         R.index_put_({torch::arange(B), goal_grid_pos.index({torch::indexing::Slice(), 0}) + 1, 
@@ -169,6 +167,67 @@ namespace utils
             V.slice(2, 1, -1).slice(3, 1, -1) = Vnext;
         }
         return V.slice(2, 1, -1).slice(3, 1, -1);
+    }
+
+    std::unordered_map<std::string, torch::Tensor> get_metadata_map (const CostKeyDataHolder& data, 
+                                                                const std::string& key) {
+        // auto costmap = std::get<MidMap>(data.keys.at(key).one);
+        // return std::get<DeepMap>(costmap.data.at("metadata")).metadata;
+
+        try {
+            const auto& tensor_or_midmap = data.keys.at(key);
+            const MidMap& mid_map = std::get<MidMap>(tensor_or_midmap.one);
+
+            const auto& tensor_or_deepmap = mid_map.data.at("metadata");
+            const DeepMap& deep_map = std::get<DeepMap>(tensor_or_deepmap.two);
+
+            return deep_map.metadata;
+        } catch (const std::bad_variant_access& e) {
+            std::cerr << "Bad variant access: " << e.what() << '\n';
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Key error: " << e.what() << '\n';
+        }
+        return {};
+    }
+
+    torch::Tensor get_data_tensor (const CostKeyDataHolder& data, 
+                                const std::string& key) {
+        // auto costmap = std::get<MidMap>(data.keys.at(key).one);
+        // return std::get<torch::Tensor>(costmap.data.at("data"));
+        try {
+            const auto& tensor_or_midmap = data.keys.at(key);
+            const MidMap& mid_map = std::get<MidMap>(tensor_or_midmap.one);
+
+            const auto& tensor_or_deepmap = mid_map.data.at("data");
+            return std::get<torch::Tensor>(tensor_or_deepmap.two);
+        } catch (const std::bad_variant_access& e) {
+            std::cerr << "Bad variant access: " << e.what() << '\n';
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Key error: " << e.what() << '\n';
+        }
+    }
+
+    torch::Tensor get_key_tensor (const CostKeyDataHolder& data, 
+                                const std::string& key) {
+        // return std::get<torch::Tensor>(data.keys.at(key).one);
+        try{
+            return std::get<torch::Tensor>(data.keys.at(key).one);
+        } catch (const std::bad_variant_access& e) {
+            std::cerr << "Bad variant access: " << e.what() << '\n';
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Key error: " << e.what() << '\n';
+        }
+    }
+
+    torch::Tensor get_goals_tensor (const CostKeyDataHolder& data) {
+        // return std::get<torch::Tensor>(data.keys.at("goals").one);
+        try {
+            return std::get<torch::Tensor>(data.keys.at("goals").one);
+        } catch (const std::bad_variant_access& e) {
+            std::cerr << "Bad variant access: " << e.what() << '\n';
+        } catch (const std::out_of_range& e) {
+            std::cerr << "Key error: " << e.what() << '\n';
+        }
     }
 };
 

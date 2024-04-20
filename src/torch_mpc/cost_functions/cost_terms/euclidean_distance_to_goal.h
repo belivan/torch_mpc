@@ -5,6 +5,11 @@
 #include <cmath>
 #include "base.h"
 #include <utility>
+#include <vector>
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include "utils.h"
 
 class EuclideanDistanceToGoal : public CostTerm
 {
@@ -29,9 +34,10 @@ class EuclideanDistanceToGoal : public CostTerm
             const torch::Tensor& states, 
             const torch::Tensor& actions,
             const torch::Tensor& feasible, 
-            const std::unordered_map<std::string, std::variant<torch::Tensor,
-                  std::unordered_map<std::string, std::variant<torch::Tensor,
-                  std::unordered_map<std::string, torch::Tensor>>>>>& data) override
+            // const std::unordered_map<std::string, std::variant<torch::Tensor,
+            //       std::unordered_map<std::string, std::variant<torch::Tensor,
+            //       std::unordered_map<std::string, torch::Tensor>>>>>& data) override
+            const CostKeyDataHolder& data) override
         {
             torch::Tensor cost = torch::zeros({states.size(0), states.size(1)},
                                             torch::TensorOptions().device(device));
@@ -40,7 +46,7 @@ class EuclideanDistanceToGoal : public CostTerm
             // for-loop here because the goal array can be ragged                                        
             for (int bi = 0; bi < states.size(0); ++bi)
             {
-                auto bgoals = std::get<torch::Tensor>(data.at(goal_key[0])).index({bi});  // Double check this
+                auto bgoals = utils::get_key_tensor(data, goal_key[0]).index({bi});  // Double check this
                 if (num_goals == -1)
                 {
                     num_goals = bgoals.size(0);

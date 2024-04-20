@@ -28,7 +28,7 @@ class FootprintSpeedmapProjection : public CostTerm
                                     double length=5.0, double width=3.0, int nl=3, 
                                     int nw=3, double length_offset=-1.0, double width_offset=0.0, bool local_frame= false,
                                     const std::vector<std::string>& speedmap_key={"local_speedmap"}, 
-                                    const torch::Device& device=torch::kCPU){
+                                    const torch::Device& device=torch::kCPU)
             // Args:
             // speed_idx: idx of state containing speed
             // speed_margin: actually command speedmap-this speed 
@@ -40,31 +40,19 @@ class FootprintSpeedmapProjection : public CostTerm
             // length_offset: move the footprint length-wise by this amount
             // width_offset: move the footprint width-wise by this amount
             // local_frame: set this flag if the speedmap is in local frame
+        : speed_margin(speed_margin), sharpness(sharpness), length(length), width(width),
+        nl(nl), nw(nw), length_offset(length_offset), width_offset(width_offset),
+        local_frame(local_frame), speedmap_key(speedmap_key), device(device) {
+        footprint = make_footprint();}
 
-            this->speed_idx = speed_idx;
-            this->speed_margin = speed_margin;
-            this->sharpness = sharpness;
-            this->length = length;
-            this->width = width;
-            this->nl = nl;
-            this->nw = nw;
-            this->length_offset = length_offset;
-            this->width_offset = width_offset;
-            this->local_frame = local_frame;
-            this->speedmap_key = speedmap_key;
-            this->device = device;
-            footprint = make_footprint();
-        }
-
-        ~FootprintSpeedmapProjection() = default;
+        // ~FootprintSpeedmapProjection() = default;
 
         torch::Tensor make_footprint()
         {
             torch::Tensor x = torch::linspace(-length/2, length/2, nl, torch::TensorOptions().device(device)) + length_offset;
             torch::Tensor y = torch::linspace(-width/2, width/2, nw, torch::TensorOptions().device(device)) + width_offset;
-            torch::Tensor xx, yy;
-            std::tie(xx, yy) = torch::meshgrid({x, y});  
-            torch::Tensor footprint = torch::stack({xx, yy}, -1).view({-1,2});
+            auto grid = torch::meshgrid({x, y});  
+            torch::Tensor footprint = torch::stack({std::get<0>(grid), std::get<1>(grid)}, -1).view({-1,2});
             return footprint;
         }
 
@@ -94,7 +82,7 @@ class FootprintSpeedmapProjection : public CostTerm
             return footprint_traj;
         }
 
-        std::vector<std::string> get_data_keys() override
+        std::vector<std::string> get_data_keys() const override
         {
             return speedmap_key;
         }
@@ -103,9 +91,10 @@ class FootprintSpeedmapProjection : public CostTerm
             const torch::Tensor& states, 
             const torch::Tensor& actions, 
             const torch::Tensor& feasible, 
-            const std::unordered_map<std::string, std::variant<torch::Tensor,
-                  std::unordered_map<std::string, std::variant<torch::Tensor,
-                  std::unordered_map<std::string, torch::Tensor>>>>>& data) override
+            // const std::unordered_map<std::string, std::variant<torch::Tensor,
+            //       std::unordered_map<std::string, std::variant<torch::Tensor,
+            //       std::unordered_map<std::string, torch::Tensor>>>>>& data) override
+            const CostKeyDataHolder& data) override
         {
             torch::Tensor states2;
             if (local_frame)
@@ -119,13 +108,16 @@ class FootprintSpeedmapProjection : public CostTerm
 
             torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
 
-            torch::Tensor speedmap = std::get<torch::Tensor>(std::get<std::unordered_map<std::string, std::variant<
-                                                                      std::unnordered_map<std::string, torch::Tensor>>>>(
-                                                                        data.at(speedmap_key[0])).at("data"));
-            torch::Tensor metadata = std::get<std::unordered_map<std::string, torch::Tensor>>(
-                                              std::get<std::unordered_map<std::string, std::variant<
-                                                       std::unordered_map<std::string, torch::Tensor>>>>(                               
-                                                            data.at(speedmap_key[0])).at("metadata"));
+            // torch::Tensor speedmap = std::get<torch::Tensor>(std::get<std::unordered_map<std::string, std::variant<
+            //                                                           std::unordered_map<std::string, torch::Tensor>>>>(
+            //                                                             data.at(speedmap_key[0])).at("data"));
+            // torch::Tensor metadata = std::get<std::unordered_map<std::string, torch::Tensor>>(
+            //                                   std::get<std::unordered_map<std::string, std::variant<
+            //                                            std::unordered_map<std::string, torch::Tensor>>>>(                               
+            //                                                 data.at(speedmap_key[0])).at("metadata"));
+
+            torch::Tensor speedmap = utils::get_data_tensor(data, speedmap_key[0]);
+            std::unordered_map<std::string, torch::Tensor> metadata = utils::get_metadata_map(data, speedmap_key[0]);
 
             torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(), 
                                                             torch::indexing::Slice(torch::None, 3)});
@@ -151,6 +143,7 @@ class FootprintSpeedmapProjection : public CostTerm
             auto ref_speeds = torch::clone(speedmap.index({idx0, 
                                                     grid_pos.index({"...", torch::indexing::Slice(), 0}), 
                                                     grid_pos.index({"...", torch::indexing::Slice(), 1})}));
+
             ref_speeds.index_put_({invalid_mask}, 1e10);
 
             ref_speeds = std::get<0>(ref_speeds.min(-1));

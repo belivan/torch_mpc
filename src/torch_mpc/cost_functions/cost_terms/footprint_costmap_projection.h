@@ -6,6 +6,8 @@
 #include "base.h"
 #include <cmath>
 #include <utility>
+#include <vector>
+#include <iostream>
 
 /*
     TODO: make sure to include--
@@ -54,10 +56,11 @@ public:
 
     torch::Tensor make_footprint(void)
     {
-        torch::Tensor xs = torch::linspace({-length / 2.0, length / 2.0, nl}, torch::TensorOptions().device(device)) + length_offset;
-        torch::Tensor ys = torch::linspace({-width / 2.0, width / 2.0, nw}, torch::TensorOptions().device(device)) + width_offset;
-
-        return torch::stack(torch::meshgrid(xs, ys)).view({-1, 2});
+        torch::Tensor xs = torch::linspace(-length / 2.0, length / 2.0, nl, torch::TensorOptions().device(device)) + length_offset;
+        torch::Tensor ys = torch::linspace(-width / 2.0, width / 2.0, nw, torch::TensorOptions().device(device)) + width_offset;
+        
+        auto grid = torch::meshgrid({xs, ys});
+        return torch::stack({grid[0], grid[1]}, -1).view({-1, 2});
     }
 
     torch::Tensor apply_footprint(torch::Tensor traj)
@@ -72,7 +75,7 @@ public:
         std::vector<int64_t> tdims(traj.sizes().begin(), traj.sizes().end() - 1);
         int nf = footprint.size(0);
 
-        auto pos = traj.index({torch::indexing::Ellipsis, torch::indexing::Slice(torch::None, 2)});
+        auto pos = traj.index({torch::indexing::Ellipsis, torch::indexing::Slice(0, 2)});
         // torch::Tensor pos = traj.index({"...", 1, 2}); // unsure how to get the first 2
         // torch::Tensor pos = traj.index("...", Slice(torch::None, 2)); // TODO: CHECK THE WAY I SLICED THIS WHYYYYYY
         auto th = traj.select(-1, 2);
@@ -109,7 +112,7 @@ public:
         return footprint_traj;
     }
 
-    std::vector<std::string> get_data_keys() override
+    std::vector<std::string> get_data_keys() const override
     {
         return costmap_key;
     }
@@ -118,9 +121,10 @@ public:
         const torch::Tensor& states, 
         const torch::Tensor& actions, 
         const torch::Tensor& feasible, 
-        const std::unordered_map<std::string, std::variant<torch::Tensor,
-              std::unordered_map<std::string, std::variant<torch::Tensor,
-              std::unordered_map<std::string, torch::Tensor>>>>>& data) override
+        // const std::unordered_map<std::string, std::variant<torch::Tensor,
+        //       std::unordered_map<std::string, std::variant<torch::Tensor,
+        //       std::unordered_map<std::string, torch::Tensor>>>>>& data) override
+        const CostKeyDataHolder& data) override
     {
         // move to local frame if necessary
         torch::Tensor states2 = local_frame ? utils::move_to_local_frame(states) : states;
@@ -129,16 +133,18 @@ public:
         torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
 
         // get costmap/metadata from data
-        torch::Tensor speedmap = std::get<torch::Tensor>(std::get<std::unordered_map<std::string, std::variant<
-                                                                      std::unnordered_map<std::string, torch::Tensor>>>>(
-                                                                        data.at(costmap_key[0])).at("data"));
-        torch::Tensor metadata = std::get<std::unordered_map<std::string, torch::Tensor>>(
-                                            std::get<std::unordered_map<std::string, std::variant<
-                                                     std::unordered_map<std::string, torch::Tensor>>>>(                               
-                                                            data.at(costmap_key[0])).at("metadata"));
+        // torch::Tensor speedmap = std::get<torch::Tensor>(std::get<std::unordered_map<std::string, std::variant<
+        //                                                               std::unordered_map<std::string, torch::Tensor>>>>(
+        //                                                                 data.at(costmap_key[0])).at("data"));
+        // torch::Tensor metadata = std::get<std::unordered_map<std::string, torch::Tensor>>(
+        //                                     std::get<std::unordered_map<std::string, std::variant<
+        //                                              std::unordered_map<std::string, torch::Tensor>>>>(                               
+        //                                                     data.at(costmap_key[0])).at("metadata"));
+        torch::Tensor costmap = utils::get_data_tensor(data, costmap_key[0]);
+        std::unordered_map<std::string, torch::Tensor> metadata = utils::get_metadata_map(data, costmap_key[0]);
 
         // get world_pos
-        torch::Tensor world_pos = states2.index({torch::indexing::Ellipsis, torch::indexing::Slice(torch::None, 3)}); // Assuming the last dimension contains x, y, and th
+        torch::Tensor world_pos = states2.index({torch::indexing::Ellipsis, torch::indexing::Slice(0, 3)}); // Assuming the last dimension contains x, y, and th
 
         // get the footprint
         torch::Tensor footprint_pos = apply_footprint(world_pos); // Assuming you have implemented apply_footprint function
@@ -155,22 +161,32 @@ public:
         // uhh invalid costmap
         grid_pos.masked_fill_(invalid_mask, 0);
         grid_pos = grid_pos.to(torch::kLong);
-        torch::Tensor idx0 = torch::arange(grid_pos.size(0)).view({grid_pos.size(0), 1});
-        idx0 = idx0.unsqueeze(-1).expand({idx0.size(0), grid_pos.size(1), grid_pos.size(2)});
+        torch::Tensor idx0 = torch::arange(grid_pos.size(0));
+        int ndims = grid_pos.dim() - 2;
+
+        // helper function
+        std::vector<int64_t> new_shape = {idx0.size(0)};
+        for (int i = 0; i < ndims; ++i)
+        {
+            new_shape.push_back(1);
+        }
+        // end helper function
+
+        idx0 = idx0.view(new_shape);
         
-        torch::Tensor new_costs = costmap.index({idx0, grid_pos.index({torch::indexing::Slice(None), 0}), grid_pos.index({torch::indexing::Slice(None), 1})}).clone();
+        auto new_costs = costmap.index({idx0, grid_pos.index({"...", 0}), grid_pos.index({"...", 1})}).clone();
         new_costs.masked_fill_(invalid_mask, 0.);
 
         // thresholding
-        torch::Tensor new_feasible = new_costs.lt(cost_thresh).all({-1, -2});
+        auto new_feasible = new_costs.lt(cost_thresh).all(-1).all(-1);
 
         // sum over time
         cost += new_costs.mean({-1}).sum({-1});
 
-        return std::make_pair(cost, new_feasible);
+        return {cost, new_feasible};
     }
 
-    FootprintCostmapProjection& to(torch::Device device) override
+    FootprintCostmapProjection& to(const torch::Device& device) override
     {
         this->device = device;
         return *this;
@@ -181,7 +197,7 @@ public:
 
 std::ostream& operator<<(std::ostream& os, const FootprintCostmapProjection& fcp)
 {
-    os << "Footprint Costmap Projection";
+    os << "Costmap Projection";
     return os;
 }
 
