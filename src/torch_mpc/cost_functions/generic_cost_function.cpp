@@ -4,6 +4,10 @@
 #include "cost_terms/footprint_speedmap_projection.h"
 
 int main() {
+
+    // This script might need adjustment to work properly
+    // See what inputs are required for the cost function classes
+
     std::vector<std::pair<double, std::shared_ptr<CostTerm>>> cost_terms = {
         {2.0, std::make_shared<EuclideanDistanceToGoal>()},
         {1.0, std::make_shared<FootprintSpeedmapProjection>()},
