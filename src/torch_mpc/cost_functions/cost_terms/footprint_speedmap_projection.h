@@ -35,11 +35,12 @@ class FootprintSpeedmapProjection : public CostTerm
             // length_offset: move the footprint length-wise by this amount
             // width_offset: move the footprint width-wise by this amount
             // local_frame: set this flag if the speedmap is in local frame
-        FootprintSpeedmapProjection(int speed_idx=3, double speed_margin=1.0, double sharpness=5.0, 
-                                    double length=5.0, double width=3.0, int nl=3, 
-                                    int nw=3, double length_offset=-1.0, double width_offset=0.0, bool local_frame= false,
-                                    const std::vector<std::string>& speedmap_key={"local_speedmap"}, 
-                                    const torch::Device& device=torch::kCPU)
+        FootprintSpeedmapProjection(double length=5.0, double width=3.0, int nl=3, 
+                                    int nw=3, double length_offset=-1.0, double width_offset=0.0,
+                                    const torch::Device& device=torch::kCPU,
+                                    int speed_idx=3, double speed_margin=1.0, double sharpness=5.0, 
+                                    bool local_frame= false,
+                                    const std::vector<std::string>& speedmap_key={"local_speedmap"})
         : speed_margin(speed_margin), sharpness(sharpness), length(length), width(width),
         nl(nl), nw(nw), length_offset(length_offset), width_offset(width_offset),
         local_frame(local_frame), speedmap_key(speedmap_key), device(device) {

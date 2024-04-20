@@ -20,8 +20,9 @@ class EuclideanDistanceToGoal : public CostTerm
         int num_goals = 2;
 
     public:
-        EuclideanDistanceToGoal(double goal_radius = 2.0, const std::vector<std::string>& goal_key = {"waypoints"}, 
-                                const torch::Device& device = torch::kCPU)
+        EuclideanDistanceToGoal(const torch::Device& device = torch::kCPU,
+                                double goal_radius = 2.0, 
+                                const std::vector<std::string>& goal_key = {"waypoints"})
                                 : goal_radius(goal_radius), goal_key(goal_key), device(device) {}
         ~EuclideanDistanceToGoal() = default;
 

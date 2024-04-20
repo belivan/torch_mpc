@@ -24,7 +24,15 @@ private:
 
 // TODO: make sure to add const/override/both whereever necessary
 public:
-    GravityThrottleKBM(const std::vector<double>& actuator_model, double L=3.0, std::vector<double> throttle_lim={0., 1.0}, std::vector<double> steer_lim={-0.52, 0.52}, double steer_rate_lim=0.45, double dt=0.1, std::string device='cpu', bool requires_grad=false, std::string state_key="state", std::string pitch_key="pitch", std::string steer_key="steer_angle") :
+    GravityThrottleKBM(const std::vector<double>& actuator_model, 
+                        double L=3.0, std::vector<double> throttle_lim={0., 1.0}, 
+                        std::vector<double> steer_lim={-0.52, 0.52},
+                        double steer_rate_lim=0.45, 
+                        double dt=0.1, std::string device='cpu',
+                        bool requires_grad=false, 
+                        std::string state_key="state", 
+                        std::string pitch_key="pitch", 
+                        std::string steer_key="steer_angle") :
         L(L),
         dt(dt),
         state_key(state_key),

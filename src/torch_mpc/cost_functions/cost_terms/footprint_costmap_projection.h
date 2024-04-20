@@ -42,9 +42,12 @@ public:
             local_frame: set this flag if costmap is in the local frame
             costmap_key: the key to look for costmap data in
         */
-    FootprintCostmapProjection(float cost_thresh = 1e10, float length = 5.0, float width = 3.0, int nl = 3, int nw = 3,
-                               float length_offset = -1.0, float width_offset = 0.0, bool local_frame = false,
-                               const std::vector<std::string>& costmap_key = {"local_costmap"}, const torch::Device& device = torch::kCPU)
+    FootprintCostmapProjection(float cost_thresh = 1e10, float length = 5.0, float width = 3.0, 
+                                float length_offset = -1.0, float width_offset = 0.0,
+                                const torch::Device& device = torch::kCPU,
+                                int nl = 3, int nw = 3,
+                                bool local_frame = false,
+                               const std::vector<std::string>& costmap_key = {"local_costmap"})
         : cost_thresh(cost_thresh), length(length), width(width), nl(nl), nw(nw),
           length_offset(length_offset), width_offset(width_offset), local_frame(local_frame),
           costmap_key(costmap_key), device(device) {
