@@ -18,6 +18,7 @@ int main() {
 
     std::cout << "Check 0" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
+    std::cout << "Expected: 0" << std::endl;
 
     // Simulate data loading
     torch::Tensor goal1 = torch::tensor({{5.0, 0.0}, {10.0, 0.0}});
@@ -32,12 +33,14 @@ int main() {
 
     std::cout << "Check 1" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
+    std::cout << "Expected: 0" << std::endl;
 
     Data data2 = data;
     cfn.data.keys["goals"] = data2;
 
     std::cout << "Check 2" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
+    std::cout << "Expected: 0" << std::endl;
     
     Metadata metadata;
     metadata.fields["resolution"] = torch::tensor({1.0, 0.5, 2.0});
@@ -55,14 +58,17 @@ int main() {
 
     std::cout << "Check 3" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
+    std::cout << "Expected: 0" << std::endl;
 
     Data data4 = data3;
     cfn.data.keys["local_speedmap"] = data3;
 
     std::cout << "Check 4" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
+    std::cout << "Expected: 1" << std::endl;
 
     std::cout << "Check 5 (Final)" << std::endl;
+    std::cout << "Plz don't crash" << std::endl;
     // Simulate states and actions
     auto states = torch::zeros({3, 4, 100, 5});
     states.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
