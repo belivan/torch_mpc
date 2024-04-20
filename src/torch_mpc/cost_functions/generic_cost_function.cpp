@@ -14,7 +14,7 @@ int main() {
 
     CostFunction cfn(cost_terms, device);
 
-    Data data;
+    Values val;
 
     std::cout << "Check 0" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
@@ -26,42 +26,41 @@ int main() {
     torch::Tensor goal3 = torch::tensor({{6.0, 0.0}, {4.0, 0.0}});
 
     auto goals= torch::stack({goal1, goal2, goal3}, 0);
-    data.data = goals;
-    data.data = goals;
+    val.data = goals;
     
-    cfn.data.keys["waypoints"] = data;
+    cfn.data.keys["waypoints"] = val;
 
     std::cout << "Check 1" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
     std::cout << "Expected: 0" << std::endl;
 
-    Data data2 = data;
-    cfn.data.keys["goals"] = data2;
+    Values val2 = val;
+    cfn.data.keys["goals"] = val2;
 
     std::cout << "Check 2" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
     std::cout << "Expected: 0" << std::endl;
     
-    Metadata metadata;
-    metadata.fields["resolution"] = torch::tensor({1.0, 0.5, 2.0});
-    metadata.fields["width"] = torch::tensor({100., 50., 200.});
-    metadata.fields["height"] = torch::tensor({100., 50., 200.});
-    metadata.fields["origin"] = torch::tensor({{-50., -25., -100.}, {-50., -25., -100.}});
-    metadata.fields["length_x"] = torch::tensor({100., 50., 200.});
-    metadata.fields["length_y"] = torch::tensor({100., 50., 200.});
+    std::unordered_map<std::string, torch::Tensor> metadata;
+    metadata["resolution"] = torch::tensor({1.0, 0.5, 2.0});
+    metadata["width"] = torch::tensor({100., 50., 200.});
+    metadata["height"] = torch::tensor({100., 50., 200.});
+    metadata["origin"] = torch::tensor({{-50., -25., -100.}, {-50., -25., -100.}});
+    metadata["length_x"] = torch::tensor({100., 50., 200.});
+    metadata["length_y"] = torch::tensor({100., 50., 200.});
 
-    Data data3 = data;
-    data3.data = torch::zeros({3, 100, 100});
-    data3.metadata = metadata;
+    Values val3 = val;
+    val3.data = torch::zeros({3, 100, 100});
+    val3.metadata = metadata;
 
-    cfn.data.keys["local_costmap"] = data3;
+    cfn.data.keys["local_costmap"] = val3;
 
     std::cout << "Check 3" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;
     std::cout << "Expected: 0" << std::endl;
 
-    Data data4 = data3;
-    cfn.data.keys["local_speedmap"] = data3;
+    Values val4 = val3;
+    cfn.data.keys["local_speedmap"] = val3;
 
     std::cout << "Check 4" << std::endl;
     std::cout << cfn.can_compute_cost() << std::endl;

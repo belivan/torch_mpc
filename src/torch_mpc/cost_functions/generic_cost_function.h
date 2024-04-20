@@ -81,7 +81,7 @@ public:
             if (key_values.second.data.defined() && key_values.second.data.numel() > 0) {
                 continue;
             }
-            if (key_values.second.metadata.fields.size() > 0) {
+            if (key_values.second.metadata.size() > 0) {
                 continue;
             }
             return false;

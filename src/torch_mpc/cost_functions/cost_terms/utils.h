@@ -171,7 +171,7 @@ namespace utils
 
     std::unordered_map<std::string, torch::Tensor> get_key_metadata_map (const CostKeyDataHolder& data, 
                                                                 const std::string& key) {
-        return data.keys.at(key).metadata.fields;
+        return data.keys.at(key).metadata;
     }
 
     torch::Tensor get_key_data_tensor (const CostKeyDataHolder& data, 

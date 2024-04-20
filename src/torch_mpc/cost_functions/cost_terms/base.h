@@ -13,18 +13,16 @@
 #include <unordered_map>
 #include <variant>
 
-struct Metadata {
-    std::unordered_map<std::string, torch::Tensor> fields;
-};
-struct Data { // insert whatever you want here
+// struct Metadata {
+//     std::unordered_map<std::string, torch::Tensor> fields;
+// };
+struct Values { // insert whatever you want here
     torch::Tensor data;
-    Metadata metadata;
-    // torch::Tensor goals;
-    // torch::Tensor waypoints;
+    std::unordered_map<std::string, torch::Tensor> metadata;
 };
 // TOP LEVEL INTERFACE TO USE: CostKeyDataHolder
 struct CostKeyDataHolder { // usually stores cost keys and whatever data
-    std::unordered_map<std::string, Data> keys;
+    std::unordered_map<std::string, Values> keys;
 };
 class CostTerm
 {
