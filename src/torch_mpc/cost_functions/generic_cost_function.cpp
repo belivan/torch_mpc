@@ -45,9 +45,9 @@ int main() {
     metadata["resolution"] = torch::tensor({1.0, 0.5, 2.0});
     metadata["width"] = torch::tensor({100., 50., 200.});
     metadata["height"] = torch::tensor({100., 50., 200.});
-    metadata["origin"] = torch::tensor({{-50., -25., -100.}, {-50., -25., -100.}});
-    metadata["length_x"] = torch::tensor({100., 50., 200.});
-    metadata["length_y"] = torch::tensor({100., 50., 200.});
+    metadata["origin"] = torch::tensor({{-50., -50.}, {-25., -25.}, {-100., -100.}});
+    metadata["length_x"] = torch::tensor({100., 50., 200.}); //might neeed adjustment
+    metadata["length_y"] = torch::tensor({100., 50., 200.}); //might neeed adjustment
 
     Values val3 = val;
     val3.data = torch::zeros({3, 100, 100});
