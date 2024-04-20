@@ -57,7 +57,7 @@ public:
         torch::Tensor xs = torch::linspace({-length / 2.0, length / 2.0, nl}, torch::TensorOptions().device(device)) + length_offset;
         torch::Tensor ys = torch::linspace({-width / 2.0, width / 2.0, nw}, torch::TensorOptions().device(device)) + width_offset;
 
-       return torch::stack(torch::meshgrid(xs, ys)).view({-1, 2}); // unsure if i can set indexing here?
+        return torch::stack(torch::meshgrid(xs, ys)).view({-1, 2});
     }
 
     torch::Tensor apply_footprint(torch::Tensor traj)
@@ -69,21 +69,42 @@ public:
 
         */
 
-        torch::IntArrayRef tdims = traj.sizes().slice(0, -1);
+        std::vector<int64_t> tdims(traj.sizes().begin(), traj.sizes().end() - 1);
         int nf = footprint.size(0);
+
         auto pos = traj.index({torch::indexing::Ellipsis, torch::indexing::Slice(torch::None, 2)});
         // torch::Tensor pos = traj.index({"...", 1, 2}); // unsure how to get the first 2
         // torch::Tensor pos = traj.index("...", Slice(torch::None, 2)); // TODO: CHECK THE WAY I SLICED THIS WHYYYYYY
-        torch::Tensor th = traj.index("...", 2);
+        auto th = traj.select(-1, 2);
 
-        torch::Tensor R = torch::stack({torch::stack({th.cos(), -th.sin()}, -1), 
-                                    torch::stack({th.sin(), th.cos()}, -1)}, -2);
+        auto R = torch::stack({torch::stack({th.cos(), -th.sin()}, -1), 
+                                    torch::stack({th.sin(), th.cos()}, -1)}, -2); // [B x K x T x 2 x 2]
 
-        torch::Tensor R_expand = R.view(tdims + torch::IntArrayRef({1, 2, 2}));
-        torch::Tensor footprint_expand = footprint.view(torch::IntArrayRef({1, 1, 1, nf, 2, 1}));
+        // helper fucntion
+        std::vector<int64_t> new_dims = tdims;
+        new_dims.push_back(1);
+        new_dims.push_back(2);
+        new_dims.push_back(2);
+        // end helper function
 
-        torch::Tensor footprint_rot = torch::matmul(R_expand, footprint_expand).view(tdims + torch::IntArrayRef({nf, 2}));
-        torch::Tensor footprint_traj = pos.view(tdims + torch::IntArrayRef({1, 2})) + footprint_rot;
+        auto R_expand = R.view(new_dims); // #[B x K x T x F x 2 x 2]
+        auto footprint_expand = footprint.view({1, 1, 1, nf, 2, 1}); // [B x K x T x F x 2 x 1]
+
+        // helper function
+        std::vector<int64_t> new_dims2 = tdims;
+        new_dims2.push_back(nf);
+        new_dims2.push_back(2);
+        // end helper function
+
+        auto footprint_rot = torch::matmul(R_expand, footprint_expand).view(new_dims2); // [B x K x T x F x 2]
+
+        // helper function
+        std::vector<int64_t> new_dims3 = tdims;
+        new_dims3.push_back(1);
+        new_dims3.push_back(2);
+        // end helper function
+
+        auto footprint_traj = pos.view(new_dims3) + footprint_rot;
 
         return footprint_traj;
     }
@@ -93,18 +114,6 @@ public:
         return costmap_key;
     }
 
-    // // TODO: double check that it does not need to be a std::pair<torch::Tensor, torch::Tensor>
-    // std::pair cost(torch::Tensor states, torch::Tensor actions, torch::Tensor feasible, torch::Tensor data) override
-    // {
-    //     torch::Tensor cost = torch.zeros({states.size(0), states.size(1)}, torch::TensorOptions().device(device));
-
-    //     // auto costmap = data.index(costmap_key, 'data')
-    //     torch::Tensor costmap = data[costmap_key + "_data"];
-    //     torch::Tensor metadata = data[costmap_key + "_metadata"];
-
-
-    //     return std::make_pair(cost, new_feasible)
-    // }
     std::pair<torch::Tensor, torch::Tensor> cost(
         const torch::Tensor& states, 
         const torch::Tensor& actions, 
@@ -139,7 +148,9 @@ public:
         std::tie(grid_pos, invalid_mask) = utils::world_to_grid(footprint_pos, metadata); // Assuming you have implemented world_to_grid function
 
         // roboaxes
-        grid_pos = grid_pos.index({torch::indexing::Ellipsis, {1, 0}});
+
+
+        grid_pos = grid_pos.index_select(-1, torch::tensor({1, 0}, torch::kLong))
 
         // uhh invalid costmap
         grid_pos.masked_fill_(invalid_mask, 0);
