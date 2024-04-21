@@ -7,6 +7,8 @@ class EuclideanDistanceToMultiGoal : public EuclideanDistanceToGoal
 {
     // Simple terminal cost that computes final-state distance to goal
 
-    EuclideanDistanceToMultiGoal(){};
+    EuclideanDistanceToMultiGoal() {};
     ~EuclideanDistanceToMultiGoal() = default;
-}
+};
+
+#endif
