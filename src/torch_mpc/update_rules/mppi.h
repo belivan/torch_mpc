@@ -12,8 +12,6 @@
 #include <chrono>
 #include <variant>
 
-#include <torch/torch.h>
-
 class MPPI {
     /*
     Implement the MPPI update rule
@@ -26,8 +24,8 @@ public:
 
     torch::Tensor update(torch::Tensor action_sequences, torch::Tensor costs) {
         // Get minimum cost and obtain normalization constant
-        auto beta = torch::min(costs, /*dim=*/-1, /*keepdim=*/true).values;
-        auto eta = torch::sum(torch::exp(-1 / temperature * (costs - beta)), /*dim=*/-1, /*keepdim=*/true);
+        auto beta = torch::min(costs, /*dim=*/-1, /*keepdim=*/true).values();
+        auto eta = torch::sum(torch::exp(-1 / temperature * (costs - beta)), /*axis=*/-1, /*keepdim=*/true);
 
         // Get importance sampling weight
         auto sampling_weights = (1.0 / eta) * ((-1.0 / temperature) * (costs - beta)).exp();
