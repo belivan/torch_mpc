@@ -162,6 +162,12 @@ public:
         return torch::atan2(2 * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz));
     }
 
+    /*
+     def observation_space(self):
+        low = -np.ones(4).astype(float) * float('inf')
+        high = -low
+        return gym.spaces.Box(low=low, high=high)
+    */
 };
 
 #endif

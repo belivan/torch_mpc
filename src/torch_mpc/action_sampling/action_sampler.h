@@ -17,11 +17,13 @@
 #include "gaussian_walk.h"
 #include "action_library.h"
 #include <yaml-cpp/yaml.h>
+#include "../algos/batch_sampling_mpc.h"
 
 // add other classes
 
 class ActionSampler
 {
+friend class BatchSamplingMPC;
 private:
     std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>> sampling_strategies;
 

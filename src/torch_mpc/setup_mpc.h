@@ -40,7 +40,7 @@
 #include "algos/batch_sampling_mpc.h"
 
 
-BatchSamplingMPC& setup_mpc(YAML::Node config)
+std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
 {
     // call this function to set up an MPC instance from the config yaml
     const std::string device_config = config["common"]["device"].as<std::string>();
@@ -143,7 +143,8 @@ BatchSamplingMPC& setup_mpc(YAML::Node config)
     }
 
     // init action sampler
-    ActionSampler action_sampler(sampling_strategies);
+    auto action_sampler = std::make_shared<ActionSampler>(sampling_strategies);
+    // ActionSampler action_sampler(sampling_strategies);
 
     // setup cost function
     std::vector<std::pair<double, std::shared_ptr<CostTerm>>> terms;
@@ -193,12 +194,14 @@ BatchSamplingMPC& setup_mpc(YAML::Node config)
         }
     }
 
-    CostFunction cost_function(terms, *device);
+    // CostFunction cost_function(terms, *device);
+    auto cost_fn = std::make_shared<GenericCostFunction>(terms, *device);
 
     // setup update rules
     if (config["update_rule"]["type"].as<std::string>() == "MPPI")
     {
-        MPPI update_rule(config["update_rule"]["args"]["temperature"].as<double>());
+        // MPPI update_rule(config["update_rule"]["args"]["temperature"].as<double>());
+        auto update_rule = std::make_shared<MPPI>(config["update_rule"]["args"]["temperature"].as<double>());
     }
     else 
     {
@@ -206,8 +209,8 @@ BatchSamplingMPC& setup_mpc(YAML::Node config)
     }
 
     // setup algo
-    BatchSamplingMPC algo(model, cost_fn, action_sampler, update_rule);
-
+    // BatchSamplingMPC algo(model, cost_fn, action_sampler, update_rule);
+    auto algo = std::make_unique<BatchSamplingMPC>(model, cost_fn, action_sampler, update_rule);
     return algo;
 };
 
