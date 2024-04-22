@@ -138,8 +138,10 @@ namespace utils
                                     costmap}, 1); // [B x 5 x W x H]
 
             auto batch = torch::arange(B, torch::kLong);
-            auto row = goal_grid_pos.index({"...", 0}) + 1;
-            auto col = goal_grid_pos.index({"...", 1}) + 1;
+            //auto row = goal_grid_pos.index({"...", 0}) + 1;
+            //auto col = goal_grid_pos.index({"...", 1}) + 1;
+            auto row = goal_grid_pos.index({torch::indexing::Ellipsis, 0 }) + 1;
+            auto col = goal_grid_pos.index({ torch::indexing::Ellipsis, 1 }) + 1;
             auto indices = torch::stack({batch, row, col}, 1);
             // handle terminal state
             V.index_put_({indices.index({torch::indexing::Slice(), 0}), 

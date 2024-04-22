@@ -44,28 +44,110 @@ public:
         }
         for (const auto& key : get_data_keys()) {
             data.keys[key].data = torch::Tensor();  // Initialize with empty tensors, don't forget to check data
+        } //i am suspicious of this initialization to be honest
+        /*
+        an initalization like :
+        for (const auto& key : get_data_keys()) {
+        data[key] = torch::Tensor();  // Initialize with empty tensors
         }
+        might work better
+        */
     }
 
-    std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, 
-                                                const torch::Tensor& actions) {
+    //std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, 
+    //                                            const torch::Tensor& actions) {
+    //    /*
+    //    Produce costs from states, actions
+    //    Args:
+    //        states: a [B1 x B2 x T x N] tensor of states
+    //        actions: a [B x B2 x T x M] tensor of actions
+    //    */
+    //    std::cout << "begin costs" << std::endl;
+    //    auto costs = torch::zeros({states.size(0), states.size(1)}, states.options());
+    //    auto feasible = torch::ones({states.size(0), states.size(1)}, torch::kBool).to(device);
+    //    std::cout << "made costs and feasible" << std::endl;
+    //    //torch::Tensor new_cost, new_feasible;
+    //    for (size_t i = 0; i < cost_terms.size(); ++i) {
+    //        std::cout << "enter loop" << std::endl;
+    //        auto[new_cost, new_feasible] = cost_terms[i]->cost(states, actions, feasible, data); // THIS IS THE LINE WHERE IT CRASHES
+    //        std::cout << "newcost in loop" << std::endl;
+    //        costs += cost_weights[i] * new_cost;
+    //        std::cout << "add to costs" << std::endl;
+    //        feasible = feasible.logical_and(new_feasible);
+    //        std::cout << "feasible update" << std::endl;
+    //    }
+    //    std::cout << " ready to exit loop " << std::endl;
+    //    return {costs, feasible};
+    //}
+
+    //std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states,
+    //    const torch::Tensor& actions) {
+    //    /*
+    //    Produce costs from states, actions
+    //    Args:
+    //        states: a [B1 x B2 x T x N] tensor of states
+    //        actions: a [B x B2 x T x M] tensor of actions
+    //    */
+    //    std::cout << "begin costs" << std::endl;
+    //    auto costs = torch::zeros({ states.size(0), states.size(1) }, states.options());
+    //    auto feasible = torch::ones({ states.size(0), states.size(1) }, torch::kBool).to(device);
+    //    std::cout << "made costs and feasible" << std::endl;
+    //    // Allocate tensors for new_cost and new_feasible
+    //    torch::Tensor new_cost, new_feasible;
+    //    for (size_t i = 0; i < cost_terms.size(); ++i) {
+    //        std::cout << "enter loop" << std::endl;
+    //        // Call the cost_terms[i]->cost function and store the result in new_cost and new_feasible
+    //        // wait i am pretty sure that this is the incorrect way to call cost? code still crashes here
+    //        std::tie(new_cost, new_feasible) = cost_terms[i]->cost(states, actions, feasible, data); // data should be cost_term related?
+    //        std::cout << "newcost in loop" << std::endl;
+    //        // Add new_cost multiplied by corresponding weight to costs
+    //        costs += cost_weights[i] * new_cost;
+    //        std::cout << "add to costs" << std::endl;
+    //        // Update feasible using logical_and operation with new_feasible
+    //        feasible = feasible.logical_and(new_feasible);
+    //        std::cout << "feasible update" << std::endl;
+    //    }
+    //    std::cout << " ready to exit loop " << std::endl;
+    //    return { costs, feasible };
+    //}
+
+    std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states,
+        const torch::Tensor& actions) {
         /*
         Produce costs from states, actions
         Args:
             states: a [B1 x B2 x T x N] tensor of states
             actions: a [B x B2 x T x M] tensor of actions
         */
-        auto costs = torch::zeros({states.size(0), states.size(1)}, states.options());
-        auto feasible = torch::ones({states.size(0), states.size(1)}, torch::kBool).to(device);
-
+        std::cout << "begin costs" << std::endl;
+        auto costs = torch::zeros({ states.size(0), states.size(1) }, states.options());
+        auto feasible = torch::ones({ states.size(0), states.size(1) }, torch::kBool).to(device);
+        std::cout << "made costs and feasible" << std::endl;
         //torch::Tensor new_cost, new_feasible;
-        for (size_t i = 0; i < cost_terms.size(); ++i) {
-            auto[new_cost, new_feasible] = cost_terms[i]->cost(states, actions, feasible, data);
+        for (int i = 0; i < cost_terms.size(); ++i) {
+            std::cout << "enter loop " << i << std::endl;
+            //std::cout << "states" << states.size(0) << std::endl;
+            //std::cout << "actions" << actions.size(0) << std::endl;
+            //std::cout << "feasible" << feasible.size(0) << std::endl;
+            //std::cout << "data" << data << std::endl;
+            if (cost_terms[i] == nullptr) {
+                std::cout << "maybe nullptr error?" << std::endl;
+            }
+            std::cout << "not nullptr costterms" << std::endl;
+            auto [new_cost, new_feasible] = cost_terms[i]->cost(states, actions, feasible, data); // THIS IS THE LINE WHERE IT CRASHES
+            std::cout << "newcost in loop" << std::endl;
             costs += cost_weights[i] * new_cost;
+            std::cout << "add to costs" << std::endl;
             feasible = feasible.logical_and(new_feasible);
+            std::cout << "feasible update" << std::endl;
+            std::cout << feasible << std::endl;
+            std::cout << "costs" << std::endl;
+            std::cout << costs << std::endl;
         }
-        return {costs, feasible};
+        std::cout << " ready to exit loop " << std::endl;
+        return { costs, feasible };
     }
+
 
     std::vector<std::string> get_data_keys() const {
         std::set<std::string> keys;

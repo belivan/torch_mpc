@@ -5,6 +5,9 @@
 #include <cmath>
 #include "base.h"
 #include "utils.h"
+#include <iostream>
+
+using namespace torch::indexing;
 
 class FootprintSpeedmapProjection : public CostTerm
 {
@@ -94,6 +97,7 @@ class FootprintSpeedmapProjection : public CostTerm
             const torch::Tensor& feasible, 
             const CostKeyDataHolder& data) override
         {
+            //std::cout << "starting cost" speedmap << std::endl;
             torch::Tensor states2;
             if (local_frame)
             {
@@ -104,14 +108,23 @@ class FootprintSpeedmapProjection : public CostTerm
                 states2 = states;
             }
 
+            //std::cout << "make cost" << std::endl;
+
             torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
+
+            //std::cout << "make speedmap" << std::endl;
 
             torch::Tensor speedmap = utils::get_key_data_tensor(data, speedmap_key[0]);
             std::unordered_map<std::string, torch::Tensor> metadata = utils::get_key_metadata_map(data, speedmap_key[0]);
 
+            //std::cout << speedmap << std::endl;
+            
+            //std::cout << "world_pos making" << std::endl;
+
             torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(), 
                                                             torch::indexing::Slice(0, 3)});
             torch::Tensor footprint_pos = apply_footprint(world_pos);
+            //std::cout << world_pos << std::endl;
             auto results = utils::world_to_grid(footprint_pos, metadata);
             torch::Tensor grid_pos = std::get<0>(results);
             torch::Tensor invalid_mask = std::get<1>(results);
@@ -152,6 +165,7 @@ class FootprintSpeedmapProjection : public CostTerm
             {
                 std::cout << "aaa" << std::endl;
             }
+            //std::cout << "returned speedmap" << std::endl;
 
             return std::make_pair(cost, new_feasible);
         }

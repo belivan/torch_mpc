@@ -13,6 +13,9 @@
      - torch_mpc.cost_functions.cost_terms.utils [world_to_grid, move_to_local_frame]
 
 */
+
+using namespace torch::indexing;
+
 class FootprintCostmapProjection : public CostTerm {
 /*
     Stage cost that projects trajectories onto a costmap, but also applies a footprint
@@ -71,7 +74,7 @@ public:
         std::vector<int64_t> tdims(traj.sizes().begin(), traj.sizes().end() - 1);
         int nf = footprint.size(0);
 
-        auto pos = traj.index({"...", torch::indexing::Slice(0, 2)});
+        auto pos = traj.index({torch::indexing::Ellipsis, torch::indexing::Slice(0, 2)});
         auto th = traj.select(-1, 2);
 
         auto R = torch::stack({
@@ -93,12 +96,15 @@ public:
 
     std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions,
                                                  const torch::Tensor& feasible, const CostKeyDataHolder& data) override {
+        std::cout << "enter footprint costmap projection" << std::endl;
         // move to local frame if necessary
         torch::Tensor states2 = local_frame ? utils::move_to_local_frame(states) : states;
         // zeros init
+        std::cout << "states2" << std::endl;
         torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
         torch::Tensor costmap = utils::get_key_data_tensor(data, costmap_key[0]);
         std::unordered_map<std::string, torch::Tensor> metadata = utils::get_key_metadata_map(data, costmap_key[0]);
+        std::cout << "cost costmap metadata" << std::endl;
         // get world_pos
         torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(0, 3)});
         // get the footprint

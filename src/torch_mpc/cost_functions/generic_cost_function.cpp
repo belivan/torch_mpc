@@ -8,10 +8,15 @@ int main() {
     // This script might need adjustment to work properly
     // See what inputs are required for the cost function classes
 
+    //std::vector<std::pair<double, std::shared_ptr<CostTerm>>> cost_terms = {
+    //    {2.0, std::make_shared<EuclideanDistanceToGoal>()},
+    //    {1.0, std::make_shared<FootprintSpeedmapProjection>()},
+    //    {1.0, std::make_shared<FootprintCostmapProjection>()}
+    //};
+
     std::vector<std::pair<double, std::shared_ptr<CostTerm>>> cost_terms = {
-        {2.0, std::make_shared<EuclideanDistanceToGoal>()},
-        {1.0, std::make_shared<FootprintSpeedmapProjection>()},
-        {1.0, std::make_shared<FootprintCostmapProjection>()}
+    {2.0, std::make_shared<EuclideanDistanceToGoal>()},
+    {1.0, std::make_shared<FootprintSpeedmapProjection>()}
     };
 
     torch::Device device = torch::kCPU;  // try torch::kCUDA later
@@ -76,7 +81,11 @@ int main() {
     auto states = torch::zeros({3, 4, 100, 5});
     states.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
 
+    std::cout << "the states are created" << std::endl;
+
     auto actions = torch::zeros({3, 4, 100, 2});
+
+    std::cout << "the actions are created" << std::endl;
 
     auto [costs, feasible] = cfn.cost(states, actions);
     std::cout << "Costs:\n" << costs << "\nFeasible:\n" << feasible << std::endl;
