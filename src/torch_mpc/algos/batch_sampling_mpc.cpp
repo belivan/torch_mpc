@@ -140,6 +140,7 @@ int main()
     for (int i = 0; i < 2; i++)
     {
         X.push_back(x.clone());
+        // Crashed here ...............................................................................
         auto [u, feasible] = mppi->get_control(x);
         std::cout << "U: " << u << std::endl;
         U.push_back(u.clone());
