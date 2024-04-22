@@ -143,9 +143,9 @@ public:
             std::cout << "add to costs" << std::endl;
             feasible = feasible.logical_and(new_feasible);
             std::cout << "feasible update" << std::endl;
-            std::cout << feasible << std::endl;
+            std::cout << feasible.sizes() << std::endl;
             std::cout << "costs" << std::endl;
-            std::cout << costs << std::endl;
+            std::cout << costs.sizes() << std::endl;
         }
         std::cout << " ready to exit loop " << std::endl;
         return { costs, feasible };
@@ -173,13 +173,6 @@ public:
         }
         return true;
     }
-
-    // void to(const std::string& device_type) {
-    //     device = torch::Device(device_type);
-    //     for (auto& term : cost_terms) {
-    //         term->to(device);  // Assuming CostTerm also supports a to(device) method
-    //     }
-    // }
 
     CostFunction& to(const torch::Device& device) {
         this->device = device;

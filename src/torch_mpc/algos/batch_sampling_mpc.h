@@ -139,20 +139,29 @@ class BatchSamplingMPC
             auto noisy_controls = action_sampler->sample(last_controls, u_lb, u_ub);
             auto trajs = rollout_model(obs, extra_states, noisy_controls);
             auto [costs, feasible] = cost_function->cost(trajs, noisy_controls);
+            std::cout << "Got costs and feasible" << std::endl;
+            std::cout << "costs" << costs.sizes() << std::endl;
+            std::cout << "feasible" << feasible.sizes() << std::endl;
 
-            costs.masked_fill_(feasible.logical_not(), 1e8); // Apply infeasibility costs
+            auto not_feasible = feasible.logical_not();
+            costs = costs + not_feasible.toType(torch::kDouble) * 1e8;  // penalize infeasible trajs
 
+            std::cout << "Update outputs with rules" << std::endl;
             auto [optimal_controls, sampling_weights] = update_rule->update(noisy_controls, costs); // implement update
+            std::cout << "Updated outputs" << std::endl;
+            std::cout << "optimal_controls" << optimal_controls.sizes() << std::endl;
+            std::cout << "sampling_weights" << sampling_weights.sizes() << std::endl;
 
             // Return first action in sequence and update self.last_controls
             last_controls = optimal_controls;
 
             auto best_cost_idx = torch::argmin(costs, 1);
-            // helper
-            auto expanded_indeces = best_cost_idx.unsqueeze(1).expand({B,1,n});
-            
-            last_states = noisy_states.gather(1, expanded_indeces).squeeze(1);
-            last_cost = costs.gather(1, expanded_indeces).squeeze(1);
+            std::cout << "best_cost_idx" << best_cost_idx.sizes() << std::endl;
+
+            last_states = noisy_states.index({torch::arange(B), best_cost_idx});
+            std::cout << "last_states" << last_states.sizes() << std::endl;
+            last_cost = costs.index({torch::arange(B), best_cost_idx});
+            std::cout << "last_states" << last_states.sizes() << std::endl;
             noisy_states = trajs;
             this->noisy_controls = noisy_controls;
             this->costs = costs;
@@ -164,6 +173,8 @@ class BatchSamplingMPC
             {
                 this->step();
             }
+
+            std::cout << "returning u" << std::endl;
 
             return {u, torch::any(feasible, 1)};
         }

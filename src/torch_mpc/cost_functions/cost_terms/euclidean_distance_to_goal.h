@@ -77,8 +77,8 @@ public:
                 //torch::Tensor first_goal_dist = torch::norm(goal_diff, torch::Tensor(), -1);
                 auto first_goal_dist = torch::norm(world_pos - bgoals[i], 2, -1);
                 //std::cout << "first_goal_dist " << first_goal_dist << std::endl;
-                auto traj_reached_goal = torch::logical_and(torch::any(torch::lt(first_goal_dist, goal_radius), -1), feasible); //[bi];
-                std::cout << "traj_reached_goal " << traj_reached_goal << std::endl;
+                auto traj_reached_goal = torch::logical_and(torch::any(torch::lt(first_goal_dist, goal_radius), -1), feasible[bi][i]); //not sure adding [bi][i] makes a difference
+                std::cout << "traj_reached_goal " << traj_reached_goal.sizes() << std::endl;
 
                 if (i != (bgoals.size(0) - 1) && torch::any(traj_reached_goal).item<bool>())
                 {
@@ -86,12 +86,12 @@ public:
                     cost[bi] += std::get<0>(torch::min(first_goal_dist, -1));
                     std::cout << "cost updated" << std::endl;
                     new_feasible = traj_reached_goal;
-                    std::cout << "new feasible and cost update" << new_feasible << std::endl;
+                    std::cout << "new feasible and cost update" << new_feasible.sizes() << std::endl;
                 }
                 else
                 {
                     std::cout << "second" << std::endl;
-                    cost[bi] += first_goal_dist.index({ torch::indexing::Ellipsis, -1 });
+                    cost[bi] += first_goal_dist.index({ Ellipsis, -1 });
                     break;
                 }
                 std::cout << "beyond the ifelse" << std::endl;
