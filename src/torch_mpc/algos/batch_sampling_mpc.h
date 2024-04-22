@@ -26,10 +26,10 @@ class BatchSamplingMPC
     */
 
     private:
-        std::shared_ptr<Model> model;
-        std::shared_ptr<CostFunction> cost_function;
-        std::shared_ptr<MPPI> update_rule;
-        std::shared_ptr<ActionSampler> action_sampler;
+        // std::shared_ptr<Model> model;
+        // std::shared_ptr<CostFunction> cost_function;
+        // std::shared_ptr<MPPI> update_rule;
+        // std::shared_ptr<ActionSampler> action_sampler;
 
         int B;
         int H;
@@ -48,6 +48,12 @@ class BatchSamplingMPC
         torch::Tensor u_ub;
 
     public:
+        // make them private if needed
+        std::shared_ptr<Model> model;
+        std::shared_ptr<CostFunction> cost_function;
+        std::shared_ptr<MPPI> update_rule;
+        std::shared_ptr<ActionSampler> action_sampler;
+
         BatchSamplingMPC(std::shared_ptr<Model> model, std::shared_ptr<CostFunction> cost_function, 
                     std::shared_ptr<ActionSampler> action_sampler, std::shared_ptr<MPPI> update_rule)
         : model(std::move(model)), cost_function(std::move(cost_function)), 
