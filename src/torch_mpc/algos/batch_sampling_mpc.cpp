@@ -187,11 +187,12 @@ int main()
 
     // Another script shows auto states = torch::zeros({3, 4, 100, 5});
     auto x = torch::zeros({batch_size, model->observation_space()}, torch::TensorOptions().device(*device));
+    std::cout << x.sizes() << std::endl;
     // auto x = torch::zeros({batch_size, 4, 100, 5}, torch::TensorOptions().device(*device));
     // x.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
 
     std::cout << "Created state" << std::endl;
-    std::cout << x << std::endl;
+    // std::cout << x << std::endl;
 
     std::vector<torch::Tensor> X; // X is the state
     std::vector<torch::Tensor> U; // U is the control input

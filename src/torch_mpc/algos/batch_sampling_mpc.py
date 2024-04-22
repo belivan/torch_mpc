@@ -129,6 +129,7 @@ class BatchSamplingMPC:
 
 if __name__ == "__main__":
     from torch_mpc.models.skid_steer import SkidSteer
+    from torch_mpc.models.kbm import KBM
     from torch_mpc.models.steer_setpoint_throttle_kbm import SteerSetpointThrottleKBM
     from torch_mpc.action_sampling.action_sampler import ActionSampler
 
@@ -169,7 +170,8 @@ if __name__ == "__main__":
     device = config['common']['device']
     batch_size = config['common']['B']
 
-    kbm = SteerSetpointThrottleKBM(L=3.0, steer_lim=[-0.52, 0.52], steer_rate_lim=0.2, dt=0.1).to(device)
+    # kbm = SteerSetpointThrottleKBM(L=3.0, steer_lim=[-0.52, 0.52], steer_rate_lim=0.2, dt=0.1).to(device)
+    kbm = KBM().to(device)
     cfn = TestCost().to(device)
     action_sampler = ActionSampler(config)
 
