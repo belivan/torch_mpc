@@ -161,7 +161,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     // setup cost function
     std::cout << "Setting up cost function" << std::endl;
     std::vector<std::pair<double, std::shared_ptr<CostTerm>>> terms;
-    for(auto iter = config["cost_terms"]["terms"].begin(); iter != config["cost_terms"]["terms"].end(); ++iter)
+    for(auto iter = config["cost_function"]["terms"].begin(); iter != config["cost_function"]["terms"].end(); ++iter)
     {
         auto term = *iter;
         double weight = term["weight"].as<double>();
@@ -171,14 +171,18 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         auto params = YAML::Node();
         if (term["args"] && 
            !term["args"].IsNull() && 
-            term["args"].size()>0) {params = term["args"];}
+            term["args"].size()>0) {
+                std::cout << "Setting up params" << std::endl;
+                params = term["args"];}
 
         if (type == "EuclideanDistanceToGoal")
         {
+            std::cout << "Setting up EuclideanDistanceToGoal" << std::endl;
             terms.push_back({weight, std::make_shared<EuclideanDistanceToGoal>(*device)});
         }
         else if (type == "FootprintSpeedmapProjection" && !params.IsNull() && params.size()>0)
         {
+            std::cout << "Setting up FootprintSpeedmapProjection" << std::endl;
             auto length = params["length"].as<double>();
             auto width = params["width"].as<double>();
             auto length_offset = params["length_offset"].as<double>();
@@ -190,17 +194,20 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
                                                                                     length_offset, width_offset, 
                                                                                     *device)});
         }
-        else if (type == "FootprintCostmapProjection")
+        else if (type == "FootprintCostmapProjection" && !params.IsNull() && params.size()>0)
         {
+            std::cout << "Setting up FootprintCostmapProjection" << std::endl;
             auto length = params["length"].as<double>();
             auto width = params["width"].as<double>();
             auto length_offset = params["length_offset"].as<double>();
             auto width_offset = params["width_offset"].as<double>();
-            auto cost_thresh = params["cost_thresh"].as<double>();
+            // auto cost_thresh = params["cost_thresh"].as<double>(); does not exist
+            auto nl = params["nl"].as<int>();
+            auto nw = params["nw"].as<int>();
 
-            terms.push_back({weight, std::make_shared<FootprintCostmapProjection>(cost_thresh, length, width, 
+            terms.push_back({weight, std::make_shared<FootprintCostmapProjection>(length, width, 
                                                                                  length_offset, width_offset, 
-                                                                                 *device)});
+                                                                                 *device, nl, nw)});
         }
         else
         {

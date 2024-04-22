@@ -43,7 +43,10 @@ public:
             cost_terms.push_back(term.second);
         }
         for (const auto& key : get_data_keys()) {
+            // std::cout << "Initializng keys" << std::endl;
+            // std::cout << "key: " << key << std::endl;
             data.keys[key].data = torch::Tensor();  // Initialize with empty tensors, don't forget to check data
+            // std::cout << "data.keys[key].data: " << data.keys[key].data << std::endl;
         } //i am suspicious of this initialization to be honest
         /*
         an initalization like :

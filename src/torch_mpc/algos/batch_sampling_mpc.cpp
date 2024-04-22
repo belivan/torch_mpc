@@ -123,10 +123,77 @@ int main()
     auto model = mppi->model; // returns a shared pointer to Model
     auto cfn = mppi->cost_function; // returns a shared pointer to CostFunction
 
+
+    // Testing can_compute_cost and inserting data
+    Values val;
+
+    std::cout << "Check 0" << std::endl;
+    std::cout << cfn->can_compute_cost() << std::endl;
+    std::cout << "Expected: 0" << std::endl;
+
+    // Simulate data loading
+    torch::Tensor goal1 = torch::tensor({{5.0, 0.0}, {10.0, 0.0}});
+    torch::Tensor goal2 = torch::tensor({{3.0, 0.0}, {4.0, 0.0}});
+    torch::Tensor goal3 = torch::tensor({{6.0, 0.0}, {4.0, 0.0}});
+
+    auto goals= torch::stack({goal1, goal2, goal3}, 0);
+    val.data = goals;
+    
+    cfn->data.keys["waypoints"] = val;
+
+    std::cout << "Check 1" << std::endl;
+    std::cout << cfn->can_compute_cost() << std::endl;
+    std::cout << "Expected: 0" << std::endl;
+
+    Values val2 = val;
+    cfn->data.keys["goals"] = val2;
+
+    std::cout << "Check 2" << std::endl;
+    std::cout << cfn->can_compute_cost() << std::endl;
+    std::cout << "Expected: 0" << std::endl;
+    
+    std::unordered_map<std::string, torch::Tensor> metadata;
+    metadata["resolution"] = torch::tensor({1.0, 0.5, 2.0});
+    metadata["width"] = torch::tensor({100., 50., 200.});
+    metadata["height"] = torch::tensor({100., 50., 200.});
+    metadata["origin"] = torch::tensor({{-50., -50.}, {-25., -25.}, {-100., -100.}});
+    metadata["length_x"] = torch::tensor({100., 50., 200.}); //might neeed adjustment
+    metadata["length_y"] = torch::tensor({100., 50., 200.}); //might neeed adjustment
+
+    Values val3 = val;
+    val3.data = torch::zeros({3, 100, 100});
+    val3.metadata = metadata;
+
+    cfn->data.keys["local_costmap"] = val3;
+
+    std::cout << "Check 3" << std::endl;
+    std::cout << cfn->can_compute_cost() << std::endl;
+    std::cout << "Expected: 0" << std::endl;
+
+    Values val4 = val3;
+    cfn->data.keys["local_speedmap"] = val3;
+
+    std::cout << "Check 4" << std::endl;
+    std::cout << cfn->can_compute_cost() << std::endl;
+    std::cout << "Expected: 1" << std::endl;
+
+    std::cout << "Check 5 (Final)" << std::endl;
+    std::cout << "Plz don't crash" << std::endl;
+    // END OF TESTING
+
+
+
+
+
+
+
     std::cout << "Received MPC" << std::endl;
     // std::cout << mpc << std::endl; this won't print anything because the << operator is not defined for BatchSamplingMPC
 
+    // Another script shows auto states = torch::zeros({3, 4, 100, 5});
     auto x = torch::zeros({batch_size, model->observation_space()}, torch::TensorOptions().device(*device));
+    // auto x = torch::zeros({batch_size, 4, 100, 5}, torch::TensorOptions().device(*device));
+    // x.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
 
     std::cout << "Created state" << std::endl;
     std::cout << x << std::endl;
