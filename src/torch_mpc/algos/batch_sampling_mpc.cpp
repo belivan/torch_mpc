@@ -182,11 +182,6 @@ int main()
     // END OF TESTING
 
 
-
-
-
-
-
     std::cout << "Received MPC" << std::endl;
     // std::cout << mpc << std::endl; this won't print anything because the << operator is not defined for BatchSamplingMPC
 
@@ -204,12 +199,11 @@ int main()
     std::cout << "Starting MPC" << std::endl;
     auto t0 = std::chrono::high_resolution_clock::now();
     // for (int i = 0; i < 500; i++)
-    for (int i = 0; i < 2; i++)
+    for (int i = 0; i < 500; i++)
     {
         X.push_back(x.clone());
-        // Crashed here ...............................................................................
         auto [u, feasible] = mppi->get_control(x);
-        std::cout << "U: " << u << std::endl;
+        // std::cout << "U: " << u.sizes() << std::endl;
         U.push_back(u.clone());
         x = model->predict(x, u);
     }
@@ -220,10 +214,17 @@ int main()
     auto X_tensor = torch::stack(X, 1).to(torch::kCPU);
     auto U_tensor = torch::stack(U, 1).to(torch::kCPU);
 
-    auto traj = model->rollout(X_tensor, mppi->last_controls).to(torch::kCPU);
+    std::cout << "X: " << X_tensor.sizes() << std::endl;
+    std::cout << "U: " << U_tensor.sizes() << std::endl;
+
+    std::cout << "Rolling out with model" << std::endl;
+    auto traj = model->rollout(x, mppi->last_controls).to(torch::kCPU);
 
     std::cout << "TRAJ COST = " << std::endl;
-    // std::cout << "TRAJ COST = " << cfn->cost(X_tensor, U_tensor) << std::endl;
+    
+    auto result = cfn->cost(X_tensor, U_tensor);
+    std::cout << "TRAJ COST = " << result.first.sizes() << std::endl;
+    std::cout << "TRAJ FEASIBLE = " << result.second.sizes() << std::endl;
 
     auto du = torch::abs(U_tensor.slice(1,1) - U_tensor.slice(1,0,-1));
 
@@ -235,9 +236,9 @@ int main()
         auto u = mppi->get_control(x);
     }
     auto t4 = std::chrono::high_resolution_clock::now();
-    std::cout << "TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds" << std::endl;
+    std::cout << "ITR TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds" << std::endl;
 
-    std::string dir_path = "/home/anton/Desktop/SPRING24/AEC/torch_mpc/src/torch_mpc/algos/algos_data/";
+    std::string dir_path = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/src/torch_mpc/algos/algos_data/";
     torch::save(X_tensor, dir_path + "X.pt");
     torch::save(U_tensor, dir_path + "U.pt");
     torch::save(traj, dir_path + "traj.pt");

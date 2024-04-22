@@ -178,7 +178,7 @@ namespace utils
 
     torch::Tensor get_key_data_tensor (const CostKeyDataHolder& data, 
                                 const std::string& key) {
-        std::cout << "key: " << key << std::endl;
+        // std::cout << "key: " << key << std::endl;
         return data.keys.at(key).data;
     }
 };

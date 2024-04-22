@@ -97,15 +97,15 @@ public:
 
     std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions,
                                                  const torch::Tensor& feasible, const CostKeyDataHolder& data) override {
-        std::cout << "enter footprint costmap projection" << std::endl;
+        // std::cout << "enter footprint costmap projection" << std::endl;
         // move to local frame if necessary
         torch::Tensor states2 = local_frame ? utils::move_to_local_frame(states) : states;
         // zeros init
-        std::cout << "states2" << std::endl;
+        // std::cout << "states2" << std::endl;
         torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
         torch::Tensor costmap = utils::get_key_data_tensor(data, costmap_key[0]);
         std::unordered_map<std::string, torch::Tensor> metadata = utils::get_key_metadata_map(data, costmap_key[0]);
-        std::cout << "cost costmap metadata" << std::endl;
+        // std::cout << "cost costmap metadata" << std::endl;
         // get world_pos
         torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(0, 3)});
         // get the footprint
@@ -133,7 +133,8 @@ public:
         // sum over time
         cost += new_costs.mean(-1).sum(-1);
 
-        return std::make_pair(cost, new_feasible);
+        // std::cout << "Return Costmap" << std::endl;
+        return {cost, new_feasible};
     }
 
     FootprintCostmapProjection& to(const torch::Device& device) override {

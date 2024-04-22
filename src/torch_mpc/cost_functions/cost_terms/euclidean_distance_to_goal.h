@@ -50,7 +50,7 @@ public:
         for (int bi = 0; bi < states.size(0); ++bi)
         {
             auto bgoals = utils::get_key_data_tensor(data, goal_key[0]).index({ bi });  // Double check this
-            std::cout << "bgoals " << bgoals << std::endl;
+            // std::cout << "bgoals " << bgoals << std::endl;
             if (num_goals == -1)
             {
                 num_goals = bgoals.size(0);
@@ -78,27 +78,27 @@ public:
                 auto first_goal_dist = torch::norm(world_pos - bgoals[i], 2, -1);
                 //std::cout << "first_goal_dist " << first_goal_dist << std::endl;
                 auto traj_reached_goal = torch::logical_and(torch::any(torch::lt(first_goal_dist, goal_radius), -1), feasible[bi][i]); //not sure adding [bi][i] makes a difference
-                std::cout << "traj_reached_goal " << traj_reached_goal.sizes() << std::endl;
+                // std::cout << "traj_reached_goal " << traj_reached_goal.sizes() << std::endl;
 
                 if (i != (bgoals.size(0) - 1) && torch::any(traj_reached_goal).item<bool>())
                 {
-                    std::cout << "first" << std::endl;
+                    // std::cout << "first" << std::endl;
                     cost[bi] += std::get<0>(torch::min(first_goal_dist, -1));
-                    std::cout << "cost updated" << std::endl;
+                    // std::cout << "cost updated" << std::endl;
                     new_feasible = traj_reached_goal;
-                    std::cout << "new feasible and cost update" << new_feasible.sizes() << std::endl;
+                    // std::cout << "new feasible and cost update" << new_feasible.sizes() << std::endl;
                 }
                 else
                 {
-                    std::cout << "second" << std::endl;
+                    // std::cout << "second" << std::endl;
                     cost[bi] += first_goal_dist.index({ Ellipsis, -1 });
                     break;
                 }
-                std::cout << "beyond the ifelse" << std::endl;
+                // std::cout << "beyond the ifelse" << std::endl;
             }
         }
 
-        std::cout << "returning euclidean" << std::endl;
+        // std::cout << "Returning Euclidean" << std::endl;
         return { cost, new_feasible };
     }
 

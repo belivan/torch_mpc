@@ -165,7 +165,7 @@ class FootprintSpeedmapProjection : public CostTerm
             {
                 std::cout << "aaa" << std::endl;
             }
-            //std::cout << "returned speedmap" << std::endl;
+            // std::cout << "Returned Speedmap" << std::endl;
 
             return std::make_pair(cost, new_feasible);
         }
