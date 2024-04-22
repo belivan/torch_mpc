@@ -6,6 +6,9 @@
 #include <torch/torch.h> // assuming we use libtorch for torch::Tensor
 #include "base.h" // TODO: MAKE SURE I NEED THIS sadhfausdfhu
 #include <iostream>
+#include <vector>
+#include <string>
+#include <limits>
 
 namespace indexing = torch::indexing;
 
@@ -25,12 +28,10 @@ private:
     double L;
     double dt;
 
-    std::string device;
-
-    std::vector<double> u_ub;
-    std::vector<double>u_lb; // unsure if this makes sense
-
+    torch::Device device;
 public:
+    std::vector<double> u_ub;
+    std::vector<double> u_lb;
     // def __init__(self, L=3.0, min_throttle=0., max_throttle=1., max_steer=0.3, dt=0.1, device='cpu'):
     //     self.L = L
     //     self.dt = dt
@@ -46,11 +47,22 @@ public:
     //     device = dev;
     // }
 
-    KBM(double L = 3.0, double min_throttle = 0., double max_throttle = 1., double max_steer = 0.3, double dt = 0.1, std::string device = "cpu")
+    KBM(double L = 3.0, double min_throttle = 0., 
+        double max_throttle = 1., double max_steer = 0.3, 
+        double dt = 0.1, const torch::Device& device = torch::kCPU)
         : L(L), dt(dt), device(device)
     {
         u_ub = { max_throttle, max_steer };
         u_lb = { min_throttle, -max_steer };
+
+        std::cout << "KBM constructor" << std::endl;
+        std::cout << u_lb[0] << std::endl;
+        std::cout << u_lb[1] << std::endl;
+        std::cout << u_ub[0] << std::endl;
+        std::cout << u_ub[1] << std::endl;
+
+        Model::u_lb = this->u_lb;
+        Model::u_ub = this->u_ub;
     }
 
     // TODO : double check this implementation of dynamics, unsure how state / action are organized
@@ -64,7 +76,7 @@ public:
         auto xd = v * th.cos();
         auto yd = v * th.sin();
         auto thd = v * torch::tan(d) / L;
-        std::cout << "finished doing dynamics, just have to return it!" << std::endl;
+        // std::cout << "finished doing dynamics, just have to return it!" << std::endl;
         return torch::stack({ xd, yd, thd }, -1);
     }
 
@@ -72,26 +84,26 @@ public:
     // TODO: IS THIS EVEN REMOTELY CORRECT
     torch::Tensor predict(const torch::Tensor& state, const torch::Tensor& action) const override
     {
-        std::cout << state << std::endl;
+        // std::cout << state << std::endl;
         torch::Tensor k1 = dynamics(state, action);
-        std::cout << "first dynamics goes well" << std::endl;
-        std::cout << "this is k1" << k1 << std::endl;
+        // std::cout << "first dynamics goes well" << std::endl;
+        // std::cout << "this is k1" << k1 << std::endl;
 
-        std::cout << "state" << std::endl;
-        std::cout << state << std::endl;
+        // std::cout << "state" << std::endl;
+        // std::cout << state << std::endl;
         auto inputhelper = state + dt / 2 * k1;
-        std::cout << "this is state + dt/2 * k1" << std::endl;
-        std::cout << inputhelper << std::endl;
-        std::cout << " " << std::endl;
+        // std::cout << "this is state + dt/2 * k1" << std::endl;
+        // std::cout << inputhelper << std::endl;
+        // std::cout << " " << std::endl;
         auto input2 = state + (dt / 2) * k1;
 
 
         torch::Tensor k2 = dynamics(input2, action);
-        std::cout << "second dynamics goes well" << std::endl;
+        // std::cout << "second dynamics goes well" << std::endl;
         torch::Tensor k3 = dynamics(state + (dt / 2) * k2, action);
-        std::cout << "third dynamics goes well" << std::endl;
+        // std::cout << "third dynamics goes well" << std::endl;
         torch::Tensor k4 = dynamics(state + (dt * k3), action);
-        std::cout << "fourth dynamics goes well" << std::endl;
+        // std::cout << "fourth dynamics goes well" << std::endl;
 
         return state + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
     }
@@ -134,6 +146,12 @@ public:
 
     torch::Tensor rollout(const torch::Tensor& state, const torch::Tensor& actions) const
     {
+        /*
+        Expected shapes:
+            state: [B1 x ... x Bn x xd]
+            actions: [B1 x ... x Bn x T x ud]
+            returns: [B1 x ... x Bn X T x xd]
+        */
         std::vector<torch::Tensor> X;
         torch::Tensor curr_state = state.clone();
         int T = actions.size(-2);  // Get the size of the time dimension
@@ -151,7 +169,7 @@ public:
     }
 
     //TODO : is this returning a double? just want to double check
-    torch::Tensor quat_to_yaw(const torch::Tensor& q)
+    torch::Tensor quat_to_yaw(const torch::Tensor& q)  // function not needed
     {
         auto q_permuted = q.permute({ q.dim() - 1, 0 });
         auto qx = q_permuted[0];
@@ -162,6 +180,28 @@ public:
         return torch::atan2(2 * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz));
     }
 
+    int64_t observation_space() const {  // added
+        // low = -np.ones(3).astype(float) * float('inf')
+        // high = -low
+        auto low = torch::ones({3}).to(torch::kFloat) * -std::numeric_limits<float>::infinity();
+        auto high = -low;
+        return low.size(0);
+    }
+    int64_t action_space() const {  // added
+        return static_cast<int64_t>(u_lb.size());
+    }
+    /*
+     def observation_space(self):
+        low = -np.ones(4).astype(float) * float('inf')
+        high = -low
+        return gym.spaces.Box(low=low, high=high)
+    */
+    
+    KBM& to(const torch::Device& device)
+    {
+        this->device = device;
+        return *this;
+    }
 };
 
 #endif

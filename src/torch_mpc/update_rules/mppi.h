@@ -2,15 +2,6 @@
 #define MPPPI_IS_INCLUDED
 
 #include <torch/torch.h>
-#include <vector>
-#include <iostream>
-#include <unordered_map>
-#include <memory>
-#include <string>
-#include <stdexcept>
-#include <optional>
-#include <chrono>
-#include <variant>
 
 class MPPI {
     /*
@@ -18,24 +9,23 @@ class MPPI {
     */
 
 private:
-    float temperature;
+    double temperature;
 public:
-    MPPI(float temperature) : temperature(temperature) {}
+    MPPI(const double temperature) : temperature(temperature) {}
 
-    torch::Tensor update(torch::Tensor action_sequences, torch::Tensor costs) {
+    std::pair<torch::Tensor, torch::Tensor> update(const torch::Tensor& action_sequences, const torch::Tensor& costs) const {
         // Get minimum cost and obtain normalization constant
-        auto beta = torch::min(costs, /*dim=*/-1, /*keepdim=*/true).values();
+        auto beta = std::get<0>(torch::min(costs, /*dim=*/-1, /*keepdim=*/true));
         auto eta = torch::sum(torch::exp(-1 / temperature * (costs - beta)), /*axis=*/-1, /*keepdim=*/true);
 
         // Get importance sampling weight
-        auto sampling_weights = (1.0 / eta) * ((-1.0 / temperature) * (costs - beta)).exp();
+        auto sampling_weights = (1.0 / eta) * torch::exp((-1.0 / temperature) * (costs - beta));
 
         // Get action sequence using weighted average
-        auto controls = (action_sequences * sampling_weights.view({ sampling_weights.sizes(), 1, 1 })).sum(/*dim=*/1);
-        return controls;
+        //  torch::Tensor controls = torch::sum(action_sequences * sampling_weights.view({-1, 1, 1}).expand_as(action_sequences), /*dim=*/1);
+        auto controls = (action_sequences * sampling_weights.view({-1, 1, 1 })).sum(/*dim=*/1);
+        return {controls, sampling_weights};
     }
-
-
 };
 
 #endif // MPPPI_IS_INCLUDED

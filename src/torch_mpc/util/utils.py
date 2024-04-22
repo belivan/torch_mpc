@@ -1,13 +1,13 @@
 import scipy
 import torch
 
-def dict_map(d1, fn):
+def dict_map(d1, fn):  // not used
     if isinstance(d1, dict):
         return {k:dict_map(v, fn) for k,v in d1.items()}
     else:
         return fn(d1)
 
-def extract_only_rotation(x,device=None):
+def extract_only_rotation(x,device=None):  // not used
     #return roll,pitch,yaw
     x_squeezed = x.reshape((-1,x.shape[-1])) 
     theta = torch.from_numpy(scipy.spatial.transform.Rotation.from_quat(x_squeezed[..., 3:7].cpu()).as_euler('xyz'))

@@ -62,7 +62,8 @@ class GravityThrottleKBM(Model):
         v_actual = v
         delta_actual = delta
         sign_friction = v.sign()
-        throttle_net = self.actuator_model[1] * throttle_og - self.actuator_model[2] * v - self.actuator_model[3] * sign_friction * pitch.cos() - self.actuator_model[5] * g * pitch.sin()
+        throttle_net = (self.actuator_model[1] * throttle_og - self.actuator_model[2] * v - 
+        self.actuator_model[3] * sign_friction * pitch.cos() - self.actuator_model[5] * g * pitch.sin())
 
         delta_des = self.actuator_model[0] * (delta_des_og - delta)
         center_mask = return_to_center(delta,delta_des_og)
