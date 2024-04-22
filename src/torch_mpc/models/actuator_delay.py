@@ -69,5 +69,5 @@ class ActuatorDelay:
     def get_observations(self, batch):
         return self.model.get_observations(batch)
 
-    def get_actions(self, batch):
+    def get_actions(self, batch): # not being used
         return self.model.get_actions(batch)

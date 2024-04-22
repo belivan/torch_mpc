@@ -70,29 +70,32 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         const double max_steer = config["model"]["args"]["max_steer"].as<double>();
         
         auto model = std::make_unique<KBM>(L, min_throttle, max_throttle, 
-                                            max_steer, dt, device_config); // using device_config here
+                                            max_steer, dt, *device);
     }
-    else if (config["model"]["type"].as<std::string>() == "GravityThrottleKBM")
-    {
-        const double L = config["model"]["args"]["L"].as<double>();
-        const std::vector<double> throttle_lim = config["model"]["args"]["throttle_lim"].as<std::vector<double>>();
-        const std::vector<double> steer_lim = config["model"]["args"]["steer_lim"].as<std::vector<double>>();
-        const double steer_rate_lim = config["model"]["args"]["steer_rate_lim"].as<double>();
-        const std::vector<double> actuator_model = config["model"]["args"]["actuator_model"].as<std::vector<double>>();
+    // Not implemented yet
+    // else if (config["model"]["type"].as<std::string>() == "GravityThrottleKBM")
+    // {
+    //     const double L = config["model"]["args"]["L"].as<double>();
+    //     const std::vector<double> throttle_lim = config["model"]["args"]["throttle_lim"].as<std::vector<double>>();
+    //     const std::vector<double> steer_lim = config["model"]["args"]["steer_lim"].as<std::vector<double>>();
+    //     const double steer_rate_lim = config["model"]["args"]["steer_rate_lim"].as<double>();
+    //     const std::vector<double> actuator_model = config["model"]["args"]["actuator_model"].as<std::vector<double>>();
         
-        auto model = std::make_unique<GravityThrottleKBM>(actuator_model, L, 
-                                                            throttle_lim, steer_lim, 
-                                                            steer_rate_lim, dt, device_config); // using device_config here
-    }
+    //     auto model = std::make_unique<GravityThrottleKBM>(actuator_model, L, 
+    //                                                         throttle_lim, steer_lim, 
+    //                                                         steer_rate_lim, dt, device_config); // using device_config here
+    // }
     else
     {
         throw std::runtime_error("Unknown model type " + config["model"]["type"].as<std::string>());
     }
 
-    if (config["model"]["actuator_delay"] && 
-       !config["model"]["actuator_delay"].IsNull() && 
-        config["model"]["actuator_delay"].size()>0) 
-    {auto model = std::make_unique<ActuatorDelay>(model, config["model"]["actuator_delay"].as<std::vector<double>>());}
+    // Not implemented yet
+    // setup actuator delay
+    // if (config["model"]["actuator_delay"] && 
+    //    !config["model"]["actuator_delay"].IsNull() && 
+    //     config["model"]["actuator_delay"].size()>0) 
+    // {auto model = std::make_unique<ActuatorDelay>(model, config["model"]["actuator_delay"].as<std::vector<double>>());}
 
     // setup sampler
     std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>> sampling_strategies;
@@ -195,7 +198,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     }
 
     // CostFunction cost_function(terms, *device);
-    auto cost_fn = std::make_shared<GenericCostFunction>(terms, *device);
+    auto cost_fn = std::make_shared<CostFunction>(terms, *device);
 
     // setup update rules
     if (config["update_rule"]["type"].as<std::string>() == "MPPI")

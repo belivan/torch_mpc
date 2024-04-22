@@ -92,7 +92,7 @@ class KBM(Model):
         self.device = device
         return self
 
-class SteerTargetKBM(KBM):
+class SteerTargetKBM(KBM):  # not being used
     """
     KBM, but the states, actions are now
     x = [x, y, th, delta] 

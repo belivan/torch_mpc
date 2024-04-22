@@ -67,8 +67,8 @@ class BatchSamplingMPC
             this->K = action_sampler->K;
             this->device = action_sampler->device.value();
 
-            n = model->observation_space().size(0); // only works for gravity throttle kbm
-            m = model->action_space().size(0); // only works for gravity throttle kbm
+            n = model->observation_space() //.size(0); // only works for gravity throttle kbm
+            m = model->action_space() //.size(0); // only works for gravity throttle kbm
             
             setup_variables();
         }
@@ -99,15 +99,15 @@ class BatchSamplingMPC
         {
             auto states_unsqueeze = obs.unsqueeze(1).expand({-1, K, -1});
             torch::Tensor trajs;
-            if (extra_states) // determine what to do with extra_states
-            {
-                auto extra_state_unsqueezed = extra_states->unsqueeze(1).expand({-1, K, -1});
-                trajs = model->rollout(states_unsqueeze, noisy_controls, extra_state_unsqueezed);
-            }
-            else
-            {
-                trajs = model->rollout(states_unsqueeze, noisy_controls);  // probably should pass all params
-            }
+            // if (extra_states) // determine what to do with extra_states
+            // {
+            //     auto extra_state_unsqueezed = extra_states->unsqueeze(1).expand({-1, K, -1});
+            //     trajs = model->rollout(states_unsqueeze, noisy_controls, extra_state_unsqueezed);
+            // }
+            // else
+            // {
+            trajs = model->rollout(states_unsqueeze, noisy_controls);  // probably should pass all params
+            // }
             
             return trajs;
         }

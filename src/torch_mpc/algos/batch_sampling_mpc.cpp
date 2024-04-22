@@ -104,8 +104,7 @@ int main()
     auto action_sampler = std::make_shared<ActionSampler>(sampling_strategies);
 
     // Creating model
-    auto model = std::make_shared<KBM>(3.0, 0., 1., 0.3, 0.1, device_config); 
-    // should be throttle kbm, but this is just a placeholder
+    auto model = std::make_shared<KBM>(3.0, 0., 1., 0.3, 0.1, *device); 
 
     // Creating update rule
     auto update_rule = std::make_shared<MPPI>(config["update_rule"]["args"]["temperature"].as<double>());
@@ -113,7 +112,7 @@ int main()
     // Creating MPC
     auto mppi = std::make_unique<BatchSamplingMPC>(model, cfn, mppi, action_sampler, update_rule);
 
-    auto x = torch::zeros({batch_size, model->observation_space().size(0)}, torch::Options(device));
+    auto x = torch::zeros({batch_size, model->observation_space().size(0)}, torch::Options(*device));
 
     std::vector<torch::Tensor> X; // X is the state
     std::vector<torch::Tensor> U; // U is the control input

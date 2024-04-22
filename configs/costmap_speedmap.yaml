@@ -44,20 +44,20 @@ ros:
             goals: True
 
 model:
-    - type: GravityThrottleKBM
-      args:
-        L: 3.0
-        throttle_lim: [0., 1.]
-        steer_lim: [-0.52, 0.52]
-        steer_rate_lim: 0.3
-        actuator_model: [-0.044, 0.5665, -2.0924, -1.5005, 2.0, -0.7938]
+    # - type: GravityThrottleKBM  # Changed by Anton
+    #   args:
+    #     L: 3.0
+    #     throttle_lim: [0., 1.]
+    #     steer_lim: [-0.52, 0.52]
+    #     steer_rate_lim: 0.3
+    #     actuator_model: [-0.044, 0.5665, -2.0924, -1.5005, 2.0, -0.7938]
 
-        #these should match the corresponding items in the ros section of this config
-        state_key: "state"
-        pitch_key: "pitch"
-        steer_key: "steer_angle"
+    #     #these should match the corresponding items in the ros section of this config
+    #     state_key: "state"
+    #     pitch_key: "pitch"
+    #     steer_key: "steer_angle"
       
-      actuator_delay: [5, 0] #num timesteps to delay controls
+    #   actuator_delay: [5, 0] #num timesteps to delay controls
 
     - type: KBM
       args:
@@ -68,7 +68,7 @@ model:
         # should we add key for state, pitch, steer_angle?
 
       # might not be necessary
-      actuator_delay: [5, 0] #num timesteps to delay controls
+      # actuator_delay: [5, 0] #num timesteps to delay controls
 
 sampling_strategies:
     strategies:
