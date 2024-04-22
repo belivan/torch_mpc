@@ -4,7 +4,7 @@ common:
     H: 50          #number of timesteps to roll out
     M: 2           #dim of action space
     dt: 0.1        #length of timestep
-    device: cuda   #device to run on 
+    device: cpu  #device to run on 
 
 # this defines what the MPPI node subscribes to
 ros:
@@ -44,7 +44,7 @@ ros:
             goals: True
 
 model:
-    # - type: GravityThrottleKBM  # Changed by Anton
+    #   type: GravityThrottleKBM  # Changed by Anton
     #   args:
     #     L: 3.0
     #     throttle_lim: [0., 1.]
@@ -59,11 +59,11 @@ model:
       
     #   actuator_delay: [5, 0] #num timesteps to delay controls
 
-    - type: KBM
-      args:
-        L: 3.0
-        throttle_lim: [0., 1.]
-        max_steer: 0.3
+    type: KBM
+    args:
+      L: 3.0
+      throttle_lim: [0., 1.]
+      max_steer: 0.3
 
         # should we add key for state, pitch, steer_angle?
 

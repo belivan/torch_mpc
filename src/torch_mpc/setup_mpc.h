@@ -44,7 +44,8 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
 {
     // call this function to set up an MPC instance from the config yaml
     const std::string device_config = config["common"]["device"].as<std::string>();
-    
+    std::cout << "Loaded config at MPC Helper" << std::endl;
+
     std::optional<torch::Device> device;
 
     if (device_config == "cuda")
@@ -59,6 +60,8 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     const double dt = config["common"]["dt"].as<double>();
     
     // setup model
+    std::cout << "Setting up model" << std::endl;
+
     std::shared_ptr<Model> model;
     if (config["model"]["type"].as<std::string>() == "KBM")
     {
@@ -72,6 +75,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         
         model = std::make_shared<KBM>(L, min_throttle, max_throttle, 
                                             max_steer, dt, *device);
+        std::cout << "Created KBM" << std::endl;
     }
     // Not implemented yet
     // else if (config["model"]["type"].as<std::string>() == "GravityThrottleKBM")
@@ -99,7 +103,8 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     // {auto model = std::make_unique<ActuatorDelay>(model, config["model"]["actuator_delay"].as<std::vector<double>>());}
 
     // setup sampler
-    std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>> sampling_strategies;
+    std::cout << "Setting up action sampler" << std::endl;
+    std::unordered_map<std::string, std::shared_ptr<SamplingStrategy>> sampling_strategies;
 
     for(auto iter = config["sampling_strategies"]["strategies"].begin(); iter != config["sampling_strategies"]["strategies"].end(); ++iter)
     {
@@ -112,7 +117,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
             
             const std::vector<double> scale = sv["args"]["scale"].as<std::vector<double>>();
             
-            auto strategy = std::make_unique<UniformGaussian>(scale, B, K, H, M, *device);
+            auto strategy = std::make_shared<UniformGaussian>(scale, B, K, H, M, *device);
             sampling_strategies.emplace(sv["label"].as<std::string>(), std::move(strategy));
         }
         else if (type == "ActionLibrary")
@@ -121,7 +126,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
             
             std::string path = sv["args"]["path"].as<std::string>();
         
-            auto strategy = std::make_unique<ActionLibrary>(path, B, K, H, M, *device);
+            auto strategy = std::make_shared<ActionLibrary>(path, B, K, H, M, *device);
             sampling_strategies.emplace(sv["label"].as<std::string>(), std::move(strategy));
         }
         else if (type == "GaussianWalk")
@@ -137,7 +142,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
 
             const std::vector<double> alpha = sv["args"]["alpha"].as<std::vector<double>>();
 
-            auto strategy = std::make_unique<GaussianWalk>(initial_distribution, scale, alpha, B, K, H, M, *device);
+            auto strategy = std::make_shared<GaussianWalk>(initial_distribution, scale, alpha, B, K, H, M, *device);
             sampling_strategies.emplace(sv["label"].as<std::string>(), std::move(strategy));
         }
         else
@@ -151,6 +156,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     // ActionSampler action_sampler(sampling_strategies);
 
     // setup cost function
+    std::cout << "Setting up cost function" << std::endl;
     std::vector<std::pair<double, std::shared_ptr<CostTerm>>> terms;
     for(auto iter = config["cost_terms"]["terms"].begin(); iter != config["cost_terms"]["terms"].end(); ++iter)
     {
@@ -203,6 +209,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     auto cost_fn = std::make_shared<CostFunction>(terms, *device);
 
     // setup update rules
+    std::cout << "Setting up update rule" << std::endl;
     std::shared_ptr<MPPI> update_rule;
     if (config["update_rule"]["type"].as<std::string>() == "MPPI")
     {
@@ -216,6 +223,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
 
     // setup algo
     // BatchSamplingMPC algo(model, cost_fn, action_sampler, update_rule);
+    std::cout << "Setting up MPC" << std::endl;
     auto algo = std::make_unique<BatchSamplingMPC>(model, cost_fn, action_sampler, update_rule);
     return algo;
 };

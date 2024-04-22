@@ -3,9 +3,11 @@
 
 int main() 
 {
-    std::string config_file = "config.yaml"; // specify the path to the config file
+    std::string config_file = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml"; // specify the path to the config file
 
     YAML::Node config = YAML::LoadFile(config_file);
+    
+    std::cout << "Loaded config" << std::endl;
 
     // class TestCost
     // {   
@@ -48,6 +50,10 @@ int main()
     else {throw std::runtime_error("Unknown device " + device_config);}
 
     const int batch_size = config["common"]["B"].as<int>();
+
+    std::cout << "Loaded config" << std::endl;
+    std::cout << "Device: " << device_config << std::endl;
+    std::cout << "Batch size: " << batch_size << std::endl;
     
     // auto cfn = std::make_shared<TestCost>()->to(*device);
     
@@ -117,11 +123,18 @@ int main()
     auto model = mppi->model; // returns a shared pointer to Model
     auto cfn = mppi->cost_function; // returns a shared pointer to CostFunction
 
+    std::cout << "Received MPC" << std::endl;
+    // std::cout << mpc << std::endl; this won't print anything because the << operator is not defined for BatchSamplingMPC
+
     auto x = torch::zeros({batch_size, model->observation_space()}, torch::TensorOptions().device(*device));
+
+    std::cout << "Created state" << std::endl;
+    std::cout << x << std::endl;
 
     std::vector<torch::Tensor> X; // X is the state
     std::vector<torch::Tensor> U; // U is the control input
 
+    std::cout << "Starting MPC" << std::endl;
     auto t0 = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 500; i++)
     {
