@@ -67,10 +67,10 @@ public:
     }
 
     int64_t observation_space() {
-        return x_lb.size(0);
+        return x_lb.size();
     }
     int64_t action_space() {
-        return u_lb.size(0);
+        return u_lb.size();
     }
     // def update_parameters(self, parameters): // not implemented
     // def reset_parameters(self, requires_grad=None): // not implemented

@@ -117,7 +117,7 @@ int main()
     auto model = mppi->model; // returns a shared pointer to Model
     auto cfn = mppi->cost_function; // returns a shared pointer to CostFunction
 
-    auto x = torch::zeros({batch_size, model->observation_space()}, torch::Options(*device));
+    auto x = torch::zeros({batch_size, model->observation_space()}, torch::TensorOptions().device(*device));
 
     std::vector<torch::Tensor> X; // X is the state
     std::vector<torch::Tensor> U; // U is the control input
@@ -126,7 +126,7 @@ int main()
     for (int i = 0; i < 500; i++)
     {
         X.push_back(x.clone());
-        auto u = mppi->get_control(x);
+        auto [u, feasible] = mppi->get_control(x);
         U.push_back(u.clone());
         x = model->predict(x, u);
     }
@@ -143,7 +143,7 @@ int main()
 
     auto du = torch::abs(U_tensor.slice(1,1) - U_tensor.slice(1,0,-1));
 
-    std::cout << "SMOOTHNESS = " << du.view({batch_size, -1})mean(-1) << std::endl;
+    std::cout << "SMOOTHNESS = " << du.view({batch_size, -1}).mean(-1) << std::endl;
 
     auto t3 = std::chrono::high_resolution_clock::now();
     for (int i = 0; i < 100; i++)

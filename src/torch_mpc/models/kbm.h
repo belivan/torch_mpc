@@ -29,11 +29,9 @@ private:
     double dt;
 
     torch::Device device;
-
-    std::vector<double> u_ub;
-    std::vector<double> u_lb; // unsure if this makes sense
-
 public:
+    std::vector<double> u_ub;
+    std::vector<double> u_lb;
     // def __init__(self, L=3.0, min_throttle=0., max_throttle=1., max_steer=0.3, dt=0.1, device='cpu'):
     //     self.L = L
     //     self.dt = dt
@@ -173,15 +171,15 @@ public:
         return torch::atan2(2 * (qw * qz + qx * qy), 1 - 2 * (qy * qy + qz * qz));
     }
 
-    int64_t observation_space() {  // added
+    int64_t observation_space() const {  // added
         // low = -np.ones(3).astype(float) * float('inf')
         // high = -low
         auto low = torch::ones({3}).to(torch::kFloat) * -std::numeric_limits<float>::infinity();
         auto high = -low;
         return low.size(0);
     }
-    int64_t action_space() {  // added
-        return u_lb.size(0);
+    int64_t action_space() const {  // added
+        return static_cast<int64_t>(u_lb.size());
     }
     /*
      def observation_space(self):
@@ -190,7 +188,7 @@ public:
         return gym.spaces.Box(low=low, high=high)
     */
     
-    KBM& to(const torch::Tensor& device)
+    KBM& to(const torch::Device& device)
     {
         this->device = device;
         return *this;

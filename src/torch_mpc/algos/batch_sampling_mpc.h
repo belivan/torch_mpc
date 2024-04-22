@@ -16,8 +16,7 @@
 #include "../models/base.h"
 #include "../cost_functions/generic_cost_function.h"
 #include "../update_rules/mppi.h"
-#include "../action_sampling/action_sampler.h
-
+#include "../action_sampling/action_sampler.h"
 class BatchSamplingMPC
 {
     /*
@@ -33,14 +32,16 @@ class BatchSamplingMPC
 
         int B;
         int H;
+        int K;
         int M;
         int n;
         int m;
         torch::Device device = torch::kCPU;
 
         torch::Tensor last_states;
-        torch::Tensor last_controls;
+        // torch::Tensor last_controls;
         torch::Tensor noisy_controls;
+        torch::Tensor noisy_states;
         torch::Tensor costs;
         torch::Tensor last_cost;
         torch::Tensor last_weights;
@@ -48,16 +49,18 @@ class BatchSamplingMPC
         torch::Tensor u_ub;
 
     public:
-        // make them private if needed
+        // make them private if needed, needed for testing script
         std::shared_ptr<Model> model;
         std::shared_ptr<CostFunction> cost_function;
         std::shared_ptr<MPPI> update_rule;
         std::shared_ptr<ActionSampler> action_sampler;
 
+        torch::Tensor last_controls;
+
         BatchSamplingMPC(std::shared_ptr<Model> model, std::shared_ptr<CostFunction> cost_function, 
                     std::shared_ptr<ActionSampler> action_sampler, std::shared_ptr<MPPI> update_rule)
         : model(std::move(model)), cost_function(std::move(cost_function)), 
-        update_rule(std::move(update_rule)), action_sampler(std::move(action_sampler)) {}
+        update_rule(std::move(update_rule)), action_sampler(std::move(action_sampler))
         {
             /*
             Args:
@@ -73,8 +76,8 @@ class BatchSamplingMPC
             this->K = action_sampler->K;
             this->device = action_sampler->device.value();
 
-            n = model->observation_space() //.size(0); // only works for gravity throttle kbm
-            m = model->action_space() //.size(0); // only works for gravity throttle kbm
+            n = model->observation_space(); //.size(0); // only works for gravity throttle kbm
+            m = model->action_space(); //.size(0); // only works for gravity throttle kbm
             
             setup_variables();
         }
@@ -82,18 +85,18 @@ class BatchSamplingMPC
         void setup_variables()
         {
             // Setup all the variables necessary to run mpc.
-            last_states = torch::zeros({B, H, n}, torch::Options(device));
-            last_controls = torch::zeros({B, H, m}, torch::Options(device));
+            last_states = torch::zeros({B, H, n}, torch::TensorOptions().device(device));
+            last_controls = torch::zeros({B, H, m}, torch::TensorOptions().device(device));
 
-            noisy_controls = torch::zeros({B, K, H, m}, torch::Options(device));
-            noisy_states = torch::zeros({B, K, H, n}, torch::Options(device));
-            costs = torch::randn({B, K}, torch::Options(device));
-            last_cost = torch::randn({B}, torch::Options(device));
-            last_weights = torch::zeros({B, K}, torch::Options(device));
+            noisy_controls = torch::zeros({B, K, H, m}, torch::TensorOptions().device(device));
+            noisy_states = torch::zeros({B, K, H, n}, torch::TensorOptions().device(device));
+            costs = torch::randn({B, K}, torch::TensorOptions().device(device));
+            last_cost = torch::randn({B}, torch::TensorOptions().device(device));
+            last_weights = torch::zeros({B, K}, torch::TensorOptions().device(device));
 
             // verify model's params
-            u_lb = torch::tensor(model.u_lb, torch::Options(device).dtype(torch::kFloat)).view({1, m}).repeat({B, 1});
-            u_ub = torch::tensor(model.u_ub, torch::Options(device).dtype(torch::kFloat)).view({1, m}).repeat({B, 1});
+            u_lb = torch::tensor(model->u_lb, torch::TensorOptions().device(device).dtype(torch::kFloat)).view({1, m}).repeat({B, 1});
+            u_ub = torch::tensor(model->u_ub, torch::TensorOptions().device(device).dtype(torch::kFloat)).view({1, m}).repeat({B, 1});
         }
 
         void reset()

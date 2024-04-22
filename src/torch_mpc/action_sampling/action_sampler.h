@@ -12,10 +12,10 @@
 #include <chrono>
 #include <variant>
 
-#include "base.h"
-#include "uniform_gaussian.h"
-#include "gaussian_walk.h"
-#include "action_library.h"
+#include "sampling_strategies/base.h"
+#include "sampling_strategies/uniform_gaussian.h"
+#include "sampling_strategies/gaussian_walk.h"
+#include "sampling_strategies/action_library.h"
 #include <yaml-cpp/yaml.h>
 #include "../algos/batch_sampling_mpc.h"
 

@@ -89,11 +89,19 @@ public:
         return true;
     }
 
-    void to(const std::string& device_type) {
-        device = torch::Device(device_type);
+    // void to(const std::string& device_type) {
+    //     device = torch::Device(device_type);
+    //     for (auto& term : cost_terms) {
+    //         term->to(device);  // Assuming CostTerm also supports a to(device) method
+    //     }
+    // }
+
+    CostFunction& to(const torch::Device& device) {
+        this->device = device;
         for (auto& term : cost_terms) {
-            term->to(device);  // Assuming CostTerm also supports a to(device) method
+            term->to(device);
         }
+        return *this;
     }
 
     friend std::ostream& operator<<(std::ostream& os, const CostFunction& cf) {

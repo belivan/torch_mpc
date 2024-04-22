@@ -14,9 +14,9 @@
 #include <yaml-cpp/yaml.h>
 
 // sampling strategies
-#include "action_sampling/sampling_stragies/uniform_gaussian.h"
-#include "action_sampling/sampling_stragies/gaussian_walk.h"
-#include "action_sampling/sampling_stragies/action_library.h"
+#include "action_sampling/sampling_strategies/uniform_gaussian.h"
+#include "action_sampling/sampling_strategies/gaussian_walk.h"
+#include "action_sampling/sampling_strategies/action_library.h"
 #include "action_sampling/action_sampler.h"
 
 // cost functions
@@ -59,17 +59,18 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     const double dt = config["common"]["dt"].as<double>();
     
     // setup model
+    std::shared_ptr<Model> model;
     if (config["model"]["type"].as<std::string>() == "KBM")
     {
         const double L = config["model"]["args"]["L"].as<double>();
 
-        const std::vector>double throttle_lim = config["model"]["args"]["throttle_lim"].as<std::vector<double>>();
+        const std::vector<double> throttle_lim = config["model"]["args"]["throttle_lim"].as<std::vector<double>>();
         const double min_throttle = throttle_lim[0];
         const double max_throttle = throttle_lim[1];
 
         const double max_steer = config["model"]["args"]["max_steer"].as<double>();
         
-        auto model = std::make_unique<KBM>(L, min_throttle, max_throttle, 
+        model = std::make_shared<KBM>(L, min_throttle, max_throttle, 
                                             max_steer, dt, *device);
     }
     // Not implemented yet
@@ -158,15 +159,16 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         std::string type = term["type"].as<std::string>();
 
         // check if args is not empty
+        auto params = YAML::Node();
         if (term["args"] && 
            !term["args"].IsNull() && 
-            term["args"].size()>0) {auto params = term["args"];}
+            term["args"].size()>0) {params = term["args"];}
 
         if (type == "EuclideanDistanceToGoal")
         {
             terms.push_back({weight, std::make_shared<EuclideanDistanceToGoal>(*device)});
         }
-        else if (type == "FootprintSpeedmapProjection")
+        else if (type == "FootprintSpeedmapProjection" && !params.IsNull() && params.size()>0)
         {
             auto length = params["length"].as<double>();
             auto width = params["width"].as<double>();
@@ -201,10 +203,11 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     auto cost_fn = std::make_shared<CostFunction>(terms, *device);
 
     // setup update rules
+    std::shared_ptr<MPPI> update_rule;
     if (config["update_rule"]["type"].as<std::string>() == "MPPI")
     {
         // MPPI update_rule(config["update_rule"]["args"]["temperature"].as<double>());
-        auto update_rule = std::make_shared<MPPI>(config["update_rule"]["args"]["temperature"].as<double>());
+        update_rule = std::make_shared<MPPI>(config["update_rule"]["args"]["temperature"].as<double>());
     }
     else 
     {

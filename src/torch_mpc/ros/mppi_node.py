@@ -339,12 +339,14 @@ if __name__ == '__main__':
     base_frame = rospy.get_param("~base_frame")
     mpc_itrs = rospy.get_param("~mpc_itrs")
 
+    ##############################
     config = yaml.safe_load(open(config_fp, 'r'))
     mpc = setup_mpc(config)
     model = mpc.model
     cost_fn = mpc.cost_fn
     dt = config['common']['dt']
     config['ros']['dt'] = dt #make the ROS converter happy
+    ##############################
 
     ros_cvt = ROSConverter(config['ros'])
 
