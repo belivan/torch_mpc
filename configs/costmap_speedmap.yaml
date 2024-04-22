@@ -76,8 +76,8 @@ sampling_strategies:
           label: action_library
           args:
             K: 100
-            #path: "/home/anton/Desktop/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/test_actionlib.pth" # Changed by Anton
-            path: "/home/anton/Desktop/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/H75_throttle_steer_unif.pt"
+            path: "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/test_actionlib.pth" # Changed by Anton
+            #path: "/home/anton/Desktop/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/H75_throttle_steer_unif.pt"
 
         - type: UniformGaussian
           label: gaussian_unif

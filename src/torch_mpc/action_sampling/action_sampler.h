@@ -23,15 +23,14 @@
 
 class ActionSampler
 {
-friend class BatchSamplingMPC;
 private:
-    std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>> sampling_strategies;
+    std::unordered_map<std::string, std::shared_ptr<SamplingStrategy>> sampling_strategies;
 
-    std::optional<int> B;
-    int K = 0;
-    std::optional<int> H;
-    std::optional<int> M;
-    std::optional<torch::Device> device;
+    // std::optional<int> B;
+    // int K = 0;
+    // std::optional<int> H;
+    // std::optional<int> M;
+    // std::optional<torch::Device> device;
 
     void make_action_sampler()
     {
@@ -40,6 +39,7 @@ private:
             if (!B.has_value())
             {
                 this->B = strat->B;
+                std::cout << "B: " << B.value() << std::endl;
             }
             else if (this->B.value() != strat->B)
             {
@@ -48,6 +48,7 @@ private:
             if (!H.has_value())
             {
                 this->H = strat->H;
+                std::cout << "H: " << H.value() << std::endl;
             }
             else if (this->H.value() != strat->H) 
             {
@@ -56,6 +57,7 @@ private:
             if (!M.has_value())
             {
                 this->M = strat->M;
+                std::cout << "M: " << M.value() << std::endl;
             }
             else if (this->M.value() != strat->M) 
             {
@@ -64,6 +66,7 @@ private:
             if (!this->device.has_value())
             {
                 this->device = strat->device;
+                std::cout << "Device: " << deviceToString(device.value()) << std::endl;
             }
             else if (deviceToString(this->device.value()) != deviceToString(strat->device))
             {
@@ -77,7 +80,14 @@ private:
     }
     
 public:
-    ActionSampler(std::unordered_map<std::string, std::unique_ptr<SamplingStrategy>>& sampling_strategies)
+    // move to private, needed for testing script
+    std::optional<int> B;
+    int K = 0;
+    std::optional<int> H;
+    std::optional<int> M;
+    std::optional<torch::Device> device;
+
+    ActionSampler(std::unordered_map<std::string, std::shared_ptr<SamplingStrategy>>& sampling_strategies)
     : sampling_strategies(std::move(sampling_strategies))
     {
         make_action_sampler();

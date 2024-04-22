@@ -119,7 +119,7 @@ int main()
     // Creating MPC
     // auto mppi = std::make_unique<BatchSamplingMPC>(model, cfn, mppi, action_sampler, update_rule);
 
-    auto mppi = setup_mpc(config); // returns a unique pointer to BatchSamplingMPC
+    auto mppi = setup_mpc(config); // returns a shared pointer to BatchSamplingMPC
     auto model = mppi->model; // returns a shared pointer to Model
     auto cfn = mppi->cost_function; // returns a shared pointer to CostFunction
 
@@ -136,10 +136,12 @@ int main()
 
     std::cout << "Starting MPC" << std::endl;
     auto t0 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 500; i++)
+    // for (int i = 0; i < 500; i++)
+    for (int i = 0; i < 2; i++)
     {
         X.push_back(x.clone());
         auto [u, feasible] = mppi->get_control(x);
+        std::cout << "U: " << u << std::endl;
         U.push_back(u.clone());
         x = model->predict(x, u);
     }
@@ -152,7 +154,8 @@ int main()
 
     auto traj = model->rollout(X_tensor, mppi->last_controls).to(torch::kCPU);
 
-    std::cout << "TRAJ COST = " << cfn->cost(X_tensor, U_tensor) << std::endl;
+    std::cout << "TRAJ COST = " << std::endl;
+    // std::cout << "TRAJ COST = " << cfn->cost(X_tensor, U_tensor) << std::endl;
 
     auto du = torch::abs(U_tensor.slice(1,1) - U_tensor.slice(1,0,-1));
 

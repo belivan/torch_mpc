@@ -54,6 +54,15 @@ public:
     {
         u_ub = { max_throttle, max_steer };
         u_lb = { min_throttle, -max_steer };
+
+        std::cout << "KBM constructor" << std::endl;
+        std::cout << u_lb[0] << std::endl;
+        std::cout << u_lb[1] << std::endl;
+        std::cout << u_ub[0] << std::endl;
+        std::cout << u_ub[1] << std::endl;
+
+        Model::u_lb = this->u_lb;
+        Model::u_ub = this->u_ub;
     }
 
     // TODO : double check this implementation of dynamics, unsure how state / action are organized
@@ -67,7 +76,7 @@ public:
         auto xd = v * th.cos();
         auto yd = v * th.sin();
         auto thd = v * torch::tan(d) / L;
-        std::cout << "finished doing dynamics, just have to return it!" << std::endl;
+        // std::cout << "finished doing dynamics, just have to return it!" << std::endl;
         return torch::stack({ xd, yd, thd }, -1);
     }
 
@@ -75,26 +84,26 @@ public:
     // TODO: IS THIS EVEN REMOTELY CORRECT
     torch::Tensor predict(const torch::Tensor& state, const torch::Tensor& action) const override
     {
-        std::cout << state << std::endl;
+        // std::cout << state << std::endl;
         torch::Tensor k1 = dynamics(state, action);
-        std::cout << "first dynamics goes well" << std::endl;
-        std::cout << "this is k1" << k1 << std::endl;
+        // std::cout << "first dynamics goes well" << std::endl;
+        // std::cout << "this is k1" << k1 << std::endl;
 
-        std::cout << "state" << std::endl;
-        std::cout << state << std::endl;
+        // std::cout << "state" << std::endl;
+        // std::cout << state << std::endl;
         auto inputhelper = state + dt / 2 * k1;
-        std::cout << "this is state + dt/2 * k1" << std::endl;
-        std::cout << inputhelper << std::endl;
-        std::cout << " " << std::endl;
+        // std::cout << "this is state + dt/2 * k1" << std::endl;
+        // std::cout << inputhelper << std::endl;
+        // std::cout << " " << std::endl;
         auto input2 = state + (dt / 2) * k1;
 
 
         torch::Tensor k2 = dynamics(input2, action);
-        std::cout << "second dynamics goes well" << std::endl;
+        // std::cout << "second dynamics goes well" << std::endl;
         torch::Tensor k3 = dynamics(state + (dt / 2) * k2, action);
-        std::cout << "third dynamics goes well" << std::endl;
+        // std::cout << "third dynamics goes well" << std::endl;
         torch::Tensor k4 = dynamics(state + (dt * k3), action);
-        std::cout << "fourth dynamics goes well" << std::endl;
+        // std::cout << "fourth dynamics goes well" << std::endl;
 
         return state + (dt / 6) * (k1 + 2 * k2 + 2 * k3 + k4);
     }

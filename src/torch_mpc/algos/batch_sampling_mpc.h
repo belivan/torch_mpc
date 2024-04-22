@@ -71,14 +71,12 @@ class BatchSamplingMPC
             */
 
             // might be an issue if empty
-            this->B = action_sampler->B.value();
-            this->H = action_sampler->H.value();
-            this->K = action_sampler->K;
-            this->device = action_sampler->device.value();
-
-            n = model->observation_space(); //.size(0); // only works for gravity throttle kbm
-            m = model->action_space(); //.size(0); // only works for gravity throttle kbm
-            
+            this->B = this->action_sampler->B.value();
+            this->H = this->action_sampler->H.value();
+            this->K = this->action_sampler->K;
+            this->device = this->action_sampler->device.value();
+            n = this->model->observation_space(); //.size(0); // only works for gravity throttle kbm
+            m = this->model->action_space(); //.size(0); // only works for gravity throttle kbm
             setup_variables();
         }
 
@@ -87,16 +85,14 @@ class BatchSamplingMPC
             // Setup all the variables necessary to run mpc.
             last_states = torch::zeros({B, H, n}, torch::TensorOptions().device(device));
             last_controls = torch::zeros({B, H, m}, torch::TensorOptions().device(device));
-
             noisy_controls = torch::zeros({B, K, H, m}, torch::TensorOptions().device(device));
             noisy_states = torch::zeros({B, K, H, n}, torch::TensorOptions().device(device));
             costs = torch::randn({B, K}, torch::TensorOptions().device(device));
             last_cost = torch::randn({B}, torch::TensorOptions().device(device));
             last_weights = torch::zeros({B, K}, torch::TensorOptions().device(device));
-
             // verify model's params
-            u_lb = torch::tensor(model->u_lb, torch::TensorOptions().device(device).dtype(torch::kFloat)).view({1, m}).repeat({B, 1});
-            u_ub = torch::tensor(model->u_ub, torch::TensorOptions().device(device).dtype(torch::kFloat)).view({1, m}).repeat({B, 1});
+            u_lb = torch::tensor(this->model->u_lb, torch::TensorOptions().device(device).dtype(torch::kFloat)).view({1, m}).repeat({B, 1});
+            u_ub = torch::tensor(this->model->u_ub, torch::TensorOptions().device(device).dtype(torch::kFloat)).view({1, m}).repeat({B, 1});
         }
 
         void reset()

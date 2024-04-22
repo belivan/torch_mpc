@@ -40,7 +40,7 @@
 #include "algos/batch_sampling_mpc.h"
 
 
-std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
+std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
 {
     // call this function to set up an MPC instance from the config yaml
     const std::string device_config = config["common"]["device"].as<std::string>();
@@ -105,14 +105,15 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     // setup sampler
     std::cout << "Setting up action sampler" << std::endl;
     std::unordered_map<std::string, std::shared_ptr<SamplingStrategy>> sampling_strategies;
-
     for(auto iter = config["sampling_strategies"]["strategies"].begin(); iter != config["sampling_strategies"]["strategies"].end(); ++iter)
     {
+        std::cout << "Setting up sampling strategy" << std::endl;
         auto sv = *iter;
 
         std::string type = sv["type"].as<std::string>();
         if (type == "UniformGaussian")
         {
+            std::cout << "Setting up UniformGaussian" << std::endl;
             const int K = sv["args"]["K"].as<int>();
             
             const std::vector<double> scale = sv["args"]["scale"].as<std::vector<double>>();
@@ -122,6 +123,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         }
         else if (type == "ActionLibrary")
         {
+            std::cout << "Setting up ActionLibrary" << std::endl;
             const int K = sv["args"]["K"].as<int>();
             
             std::string path = sv["args"]["path"].as<std::string>();
@@ -131,6 +133,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         }
         else if (type == "GaussianWalk")
         {
+            std::cout << "Setting up GaussianWalk" << std::endl;
             const int K = sv["args"]["K"].as<int>();
             
             const std::vector<double> scale = sv["args"]["scale"].as<std::vector<double>>();
@@ -224,7 +227,7 @@ std::unique_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     // setup algo
     // BatchSamplingMPC algo(model, cost_fn, action_sampler, update_rule);
     std::cout << "Setting up MPC" << std::endl;
-    auto algo = std::make_unique<BatchSamplingMPC>(model, cost_fn, action_sampler, update_rule);
+    auto algo = std::make_shared<BatchSamplingMPC>(model, cost_fn, action_sampler, update_rule);
     return algo;
 };
 

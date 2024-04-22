@@ -16,6 +16,13 @@ public:
     std::vector<double> u_ub;
     std::vector<double> u_lb;
 
+    Model() = default;
+    // Model(std::vector<double> u_ub, std::vector<double> u_lb) 
+    // {
+    //     this->u_ub = u_ub;
+    //     this->u_lb = u_lb;
+    // }
+
     virtual torch::Tensor predict(const torch::Tensor& state, const torch::Tensor& action) const = 0;
     virtual torch::Tensor rollout(const torch::Tensor& state, const torch::Tensor& actions) const = 0;
     virtual int64_t observation_space() const = 0;
