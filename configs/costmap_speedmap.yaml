@@ -72,12 +72,12 @@ model:
 
 sampling_strategies:
     strategies:
-        - type: ActionLibrary
-          label: action_library
-          args:
-            K: 100
-            path: "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/test_actionlib.pth" # Changed by Anton
-            #path: "/home/anton/Desktop/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/H75_throttle_steer_unif.pt"
+        # - type: ActionLibrary
+        #   label: action_library
+        #   args:
+        #     K: 100
+        #     path: "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/test_actionlib.pth" # Changed by Anton
+        #     #path: "/home/anton/Desktop/SPRING24/AEC/torch_mpc/data/action_libraries/yamaha_atv/H75_throttle_steer_unif.pt"
 
         - type: UniformGaussian
           label: gaussian_unif
@@ -108,28 +108,28 @@ cost_function:
         #     nl: 5
         #     nw: 5
 
-        # #smaller footprint for constraint
-        # - type: FootprintCostmapProjection
-        #   costmap_key: local_costmap #should match the name in the ros section
-        #   weight: 0.001
-        #   args:
-        #     length: 0.75
-        #     width: 0.75
-        #     length_offset: -1.0
-        #     width_offset: 0.0
-        #     cost_thresh: 0.4
+        #smaller footprint for constraint
+        - type: FootprintCostmapProjection
+          costmap_key: local_costmap #should match the name in the ros section
+          weight: 0.001
+          args:
+            length: 0.75
+            width: 0.75
+            length_offset: -1.0
+            width_offset: 0.0
+            cost_thresh: 0.4
 
-        #full footprint for cost eval
-      # - type: FootprintCostmapProjection
-      #   costmap_key: local_costmap #should match the name in the ros section
-      #   weight: 1.0
-      #   args:
-      #     length: 4.0
-      #     width: 2.0
-      #     length_offset: -1.0
-      #     width_offset: 0.0
-      #     nl: 5
-      #     nw: 5
+        # full footprint for cost eval
+        - type: FootprintCostmapProjection
+          costmap_key: local_costmap #should match the name in the ros section
+          weight: 1.0
+          args:
+            length: 4.0
+            width: 2.0
+            length_offset: -1.0
+            width_offset: 0.0
+            nl: 5
+            nw: 5
 
 #        - type: SpeedLimit
 #          weight: 1.0
@@ -137,10 +137,10 @@ cost_function:
 #            target_speed: 6.5
 #            max_speed: 7.5
 
-      - type: EuclideanDistanceToGoal
-        goal_key: waypoints
-        weight: 0.1
-        args:
+        - type: EuclideanDistanceToGoal
+          goal_key: waypoints
+          weight: 0.1
+          args:
 
 update_rule:
     type: MPPI

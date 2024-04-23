@@ -11,6 +11,7 @@
 #include <unordered_map>
 #include <exception>
 #include <variant>
+#include <stdexcept>
 
 namespace utils
 {
@@ -74,28 +75,27 @@ namespace utils
         auto res = metadata.at("resolution");
         auto nx = (metadata.at("length_x") / res).to(torch::kLong);
         auto ny = (metadata.at("length_y") / res).to(torch::kLong);
-        auto ox = metadata.at("origin").select(-1,0);
-        auto oy = metadata.at("origin").select(-1,1);
+        auto ox = metadata.at("origin").index({torch::indexing::Slice(), 0});
+        auto oy = metadata.at("origin").index({torch::indexing::Slice(), 1});
         
-        // helper function
-        auto ones_tensor = torch::ones(world_pos.dim() - 2).to(torch::kLong);
-        // end helper function
+        std::vector<int64_t> array({-1});
+        for (int i = 0; i < world_pos.dim() - 2; ++i) {
+            array.push_back(1);
+        }
+        auto trailing_dims = torch::IntArrayRef(array);
 
-        std::vector<int64_t> trailing_dims(ones_tensor.data_ptr<int64_t>(), ones_tensor.data_ptr<int64_t>() + ones_tensor.numel());
+        auto gx = (world_pos.select(-1, 0) - ox.view(trailing_dims)) / 
+                            res.view(trailing_dims);
 
-        // helper function
-        std::vector<int64_t> new_shape = {-1};
-        new_shape.insert(new_shape.end(), trailing_dims.begin(), trailing_dims.end());
-        // end helper function
-
-        auto gx = (world_pos.select(-1, 0) - ox.view(new_shape)) / res.view(new_shape);
-        auto gy = (world_pos.select(-1, 1) - oy.view(new_shape)) / res.view(new_shape);
+        auto gy = (world_pos.select(-1, 1) - oy.view(trailing_dims)) / 
+                            res.view(trailing_dims);
+        // std::cout << "gx: " << gx << std::endl;
 
         auto grid_pos = torch::stack({gx, gy}, -1).to(torch::kLong);
         auto invalid_mask = (grid_pos.select(-1, 0) < 0) |
                             (grid_pos.select(-1, 1) < 0) |
-                            (grid_pos.select(-1, 0) >= nx.view(new_shape)) |
-                            (grid_pos.select(-1, 1) >= ny.view(new_shape));
+                            (grid_pos.select(-1, 0) >= nx.view(trailing_dims)) |
+                            (grid_pos.select(-1, 1) >= ny.view(trailing_dims));
 
         return {grid_pos, invalid_mask};
     }   

@@ -202,6 +202,14 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
             auto length_offset = params["length_offset"].as<double>();
             auto width_offset = params["width_offset"].as<double>();
             // auto cost_thresh = params["cost_thresh"].as<double>(); does not exist
+            
+            if (!params["nl"] || !params["nw"])
+            {
+                terms.push_back({weight, std::make_shared<FootprintCostmapProjection>(length, width, 
+                                                                                 length_offset, width_offset, 
+                                                                                 *device)});
+                continue;
+            }
             auto nl = params["nl"].as<int>();
             auto nw = params["nw"].as<int>();
 

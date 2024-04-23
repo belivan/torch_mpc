@@ -46,8 +46,7 @@ class FootprintSpeedmapProjection : public CostTerm
                                     const std::vector<std::string>& speedmap_key={"local_speedmap"})
         : speed_margin(speed_margin), sharpness(sharpness), length(length), width(width),
         nl(nl), nw(nw), length_offset(length_offset), width_offset(width_offset),
-        local_frame(local_frame), speedmap_key(speedmap_key), device(device) {
-        footprint = make_footprint();}
+        local_frame(local_frame), speedmap_key(speedmap_key), device(device), speed_idx(speed_idx), footprint(make_footprint()){}
 
         // ~FootprintSpeedmapProjection() = default;
 
@@ -108,34 +107,38 @@ class FootprintSpeedmapProjection : public CostTerm
                 states2 = states;
             }
 
-            //std::cout << "make cost" << std::endl;
+            // std::cout << "make cost" << std::endl;
 
             torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
 
-            //std::cout << "make speedmap" << std::endl;
+            // std::cout << "make speedmap" << std::endl;
 
             torch::Tensor speedmap = utils::get_key_data_tensor(data, speedmap_key[0]);
             std::unordered_map<std::string, torch::Tensor> metadata = utils::get_key_metadata_map(data, speedmap_key[0]);
 
-            //std::cout << speedmap << std::endl;
+            std::cout << speedmap.sizes() << std::endl;
             
-            //std::cout << "world_pos making" << std::endl;
+            // std::cout << "world_pos making" << std::endl;
 
             torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(), 
                                                             torch::indexing::Slice(0, 3)});
             torch::Tensor footprint_pos = apply_footprint(world_pos);
-            //std::cout << world_pos << std::endl;
-            auto results = utils::world_to_grid(footprint_pos, metadata);
-            torch::Tensor grid_pos = std::get<0>(results);
-            torch::Tensor invalid_mask = std::get<1>(results);
+            std::cout << world_pos.sizes() << std::endl;
+
+            auto [grid_pos, invalid_mask] = utils::world_to_grid(footprint_pos, metadata);
+            // std::cout << "grid_pos" << grid_pos.sizes() << std::endl;
+            // std::cout << "invalid_mask" << invalid_mask.sizes() << std::endl;
 
             // Switch grid axes to align with robot centric axes: +x forward, +y left
             grid_pos = grid_pos.index_select(-1, torch::tensor({1, 0}, torch::kLong));
             
             grid_pos.index_put_({invalid_mask}, 0);
+            //grid_pos.masked_fill_(invalid_mask, 0);
             grid_pos = grid_pos.to(torch::kLong);
+            // std::cout << "grid_pos" << grid_pos.sizes() << std::endl;
 
             auto idx0 = torch::arange(grid_pos.size(0), torch::TensorOptions().device(device));
+
             long ndims = grid_pos.dim() - 2;
             std::vector<int64_t> shape = {idx0.size(0)};
             for (int i = 0; i < ndims; ++i) {
@@ -144,17 +147,23 @@ class FootprintSpeedmapProjection : public CostTerm
             idx0 = idx0.view(shape);
 
             auto ref_speeds = torch::clone(speedmap.index({idx0, 
-                                                    grid_pos.index({"...", torch::indexing::Slice(), 0}), 
-                                                    grid_pos.index({"...", torch::indexing::Slice(), 1})}));
+                                                    grid_pos.index({"...", 0}), 
+                                                    grid_pos.index({"...", 1})}));
 
-            ref_speeds.index_put_({invalid_mask}, 1e10);  // should be 0 I think
-
+            // std::cout << "ref_speeds" << ref_speeds.sizes() << std::endl;
+            // ref_speeds.index_put_({invalid_mask}, 1e10);  // should be 0 I think
+            ref_speeds.masked_fill_(invalid_mask, 1e10);
+            // std::cout << "ref_speeds" << ref_speeds.sizes() << std::endl;
             ref_speeds = std::get<0>(ref_speeds.min(-1));
+            // std::cout << "ref_speeds" << ref_speeds.sizes() << std::endl;
 
+            std::cout << "states2" << states2.sizes() << std::endl;
             auto traj_speeds = states2.index({"...", speed_idx});
+            std::cout << "traj_speeds" << traj_speeds.sizes() << std::endl;
 
             torch::Tensor target_speeds = ref_speeds - speed_margin;
             cost = (sharpness * (traj_speeds - target_speeds)).exp().mean(-1);
+            std::cout << "cost" << cost.sizes() << std::endl;
 
             torch::Tensor state_feasible = traj_speeds < ref_speeds;
 
@@ -167,7 +176,7 @@ class FootprintSpeedmapProjection : public CostTerm
             }
             // std::cout << "Returned Speedmap" << std::endl;
 
-            return std::make_pair(cost, new_feasible);
+            return {cost, new_feasible};
         }
 
         FootprintSpeedmapProjection& to(const torch::Device& device) override
