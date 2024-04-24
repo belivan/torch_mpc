@@ -139,18 +139,11 @@ class BatchSamplingMPC
             auto noisy_controls = action_sampler->sample(last_controls, u_lb, u_ub);
             auto trajs = rollout_model(obs, extra_states, noisy_controls);
             auto [costs, feasible] = cost_function->cost(trajs, noisy_controls);
-            // std::cout << "Got costs and feasible" << std::endl;
-            // std::cout << "costs" << costs.sizes() << std::endl;
-            // std::cout << "feasible" << feasible.sizes() << std::endl;
 
             auto not_feasible = feasible.logical_not();
-            costs = costs + not_feasible.toType(torch::kDouble) * 1e8;  // penalize infeasible trajs
+            costs = costs + not_feasible.toType(torch::kDouble) * 1e8;  // penalize infeasible trajs // I AM DOING SOME DOUBLE STUFF HERE 
 
-            // std::cout << "Update outputs with rules" << std::endl;
             auto [optimal_controls, sampling_weights] = update_rule->update(noisy_controls, costs); // implement update
-            // std::cout << "Updated outputs" << std::endl;
-            // std::cout << "optimal_controls" << optimal_controls.sizes() << std::endl;
-            // std::cout << "sampling_weights" << sampling_weights.sizes() << std::endl;
 
             // Return first action in sequence and update self.last_controls
             last_controls = optimal_controls;

@@ -40,7 +40,6 @@ public:
         u_ub = { max_throttle, max_steer };
         u_lb = { min_throttle, -max_steer };
 
-        std::cout << "KBM constructor" << std::endl;
         std::cout << u_lb[0] << std::endl;
         std::cout << u_lb[1] << std::endl;
         std::cout << u_ub[0] << std::endl;
@@ -56,9 +55,6 @@ public:
         auto xyth = state.moveaxis(-1, 0);
         auto vd = action.moveaxis(-1, 0);
 
-        // std::cout << "xyth" << xyth.sizes() << std::endl;
-        // std::cout << "vd" << vd.sizes() << std::endl;
-
         auto x = xyth[0];
         auto y = xyth[1];
         auto th = xyth[2];
@@ -69,10 +65,9 @@ public:
         auto xd = v * torch::cos(th);
         auto yd = v * torch::sin(th);
         auto thd = v * torch::tan(delta) / L;
-        // std::cout << "v" << v.sizes() << std::endl;
-        // std::cout << "yd" << yd.sizes() << std::endl;
+
         auto result = torch::stack({xd, yd, thd}, -1);
-        // std::cout << "result" << result.sizes() << std::endl;
+
         return result;
     }
 
@@ -80,15 +75,10 @@ public:
     // TODO: IS THIS EVEN REMOTELY CORRECT
     torch::Tensor predict(const torch::Tensor& state, const torch::Tensor& action) const override
     {
-            // std::cout << "action: " << action.sizes() << std::endl;
-            // std::cout << "state: " << state.sizes() << std::endl;
-        // std::cout << state << std::endl;
         torch::Tensor k1 = dynamics(state, action);
-        // std::cout << "k1" << k1.sizes() << std::endl;
 
         auto i1 = state + (dt / 2) * k1;
         torch::Tensor k2 = dynamics(i1, action);
-        // std::cout << "k2" << k2.sizes() << std::endl;
 
         auto i2 = state + (dt / 2) * k2;
         torch::Tensor k3 = dynamics(i2, action);
@@ -110,10 +100,10 @@ public:
         torch::Tensor curr_state = state.clone();
 
         int T = actions.size(-2);  // Get the size of the time dimension
-        // std::cout << "T: " << T << std::endl;
+
         for (int t = 0; t < T; ++t)
         {
-            // std::cout << "timestep: " << t << std::endl;
+
             torch::Tensor action = actions.index({ indexing::Ellipsis, t, indexing::Slice() });
             torch::Tensor next_state = predict(curr_state, action);
             X.push_back(next_state);
