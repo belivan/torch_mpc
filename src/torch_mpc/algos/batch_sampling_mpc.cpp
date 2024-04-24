@@ -92,8 +92,8 @@ int main()
     // std::cout << cfn->can_compute_cost() << std::endl;
     // std::cout << "Expected: 0" << std::endl;
 
-    Values val4 = val3;
-    cfn->data.keys["local_speedmap"] = val3;
+    // Values val4 = val3;
+    // cfn->data.keys["local_speedmap"] = val3;
 
     // std::cout << "Check 4" << std::endl;
     // std::cout << cfn->can_compute_cost() << std::endl;

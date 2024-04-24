@@ -6,7 +6,7 @@ include_directories(
         "../sampling_strategies/sampling_strategies"
         )
 
-add_executable(batch_sampling_mpc batch_sampling_mpc.cpp)
+add_executable(batch_sampling_mpc batch_sampling_mpc_master.cpp)
 target_link_libraries(batch_sampling_mpc ${TORCH_LIBRARIES} yaml-cpp::yaml-cpp)
 
 

@@ -1,10 +1,11 @@
 #include "batch_sampling_mpc.h"
 #include "../setup_mpc.h"
 #include <filesystem>
+namespace fs = std::filesystem;
 
 int main() 
 {
-    std::string config_file = "/home/pearlfranz/aec/torch_mpc/configs/costmap_speedmap.yaml"; // specify the path to the config file
+    std::string config_file = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml"; // specify the path to the config file
 
     YAML::Node config = YAML::LoadFile(config_file);
     
@@ -22,33 +23,86 @@ int main()
 
 
 
-    fs::path data_dir_path = "/home/belivan/AEC/data/mppi_inputs/run_3";
-    std::string costmaps = "costmaps/metadata.yaml";
-    std::string data = "data/data.pth";
-    std::string pos = "pos/pos.pth";
-    std::string steer = "steer/steer_data.pth";
-    std::string waypoints = "waypoints/forward.yaml";
+    fs::path data_dir_path = "C:/Users/anton/Documents/SPRING24/AEC/run_3";
+    fs::path costmaps_dir = data_dir_path / "costmaps/metadata.yaml";
+    fs::path data_dir = data_dir_path / "data/data.pth";
+    fs::path pos_dir = data_dir_path / "pos/pos.pth";
+    fs::path steer_dir = data_dir_path / "steer/steer_data.pth";
+    fs::path waypoints_dir = data_dir_path / "waypoints/forward.yaml";
 
     // Load generated sampele data
     // Open costmaps
-    auto costmap_metadata = YAML::LoadFile((data_dir_path / costmaps).string());
+    auto costmap_metadata_yaml = YAML::LoadFile(costmaps.string());
 
     // Open data
-    auto data = torch::jit::load((data_dir_path / data).string());
-    auto data_tensor = data.attr("data").toTensor();
-    std::cout << data.sizes() << std::endl;
+
+    auto data_jit = torch::jit::load("C:/Users/anton/Documents/SPRING24/AEC/run_3/sample/sample.pth");
+   
+    auto data_tensor = data_jit.attr("data").toTensor();
+    std::cout << data_tensor.sizes() << std::endl;
     // Open pos
-    auto pos = torch::jit::load((data_dir_path / pos).string());
-    auto pos_tensor = pos.attr("data").toTensor();
-    std::cout << pos.sizes() << std::endl;
+    torch::jit::Module pos_jit = torch::jit::load(pos.string());
+    auto pos_tensor = pos_jit.attr("data").toTensor();
+    std::cout << pos_tensor.sizes() << std::endl;
     // Open steer
-    auto steer = torch::jit::load((data_dir_path / steer).string());
-    auto steer_tensor = steer.attr("data").toTensor();
-    std::cout << steer.sizes() << std::endl;
+    torch::jit::Module steer_jit = torch::jit::load(steer.string());
+    auto steer_tensor = steer_jit.attr("data").toTensor();
+    std::cout << steer_tensor.sizes() << std::endl;
     // Open waypoints
-    auto waypoints = YAML::LoadFile((data_dir_path / waypoints).string());
+    auto waypoints_yaml = YAML::LoadFile(waypoints.string());
 
     std::cout << "Loaded data" << std::endl;
+    // waypoints
+    torch::Tensor waypoints = torch::Tensor();
+    for(auto iter = waypoints_yaml["waypoints"].begin(); iter != waypoints_yaml["waypoints"].end(); ++iter)
+    {
+        auto sv = *iter;
+        auto x = sv["pose"]["x"].as<double>();
+        auto y = sv["pose"]["y"].as<double>();
+        auto goal = torch::tensor({{x, y},{0.0, 0.0}}, torch::TensorOptions().device(*device));
+        if (waypoints.numel() == 0){waypoints = goal;}
+        else{waypoints = torch::cat({waypoints, goal}, 0);}
+    }
+
+    torch::Tensor goals = torch::clone(waypoints);
+    // costmaps metadata
+    std::vector<std::unordered_map<std::string, torch::Tensor>> metadatas;
+    for(auto iter = costmap_metadata_yaml["costmaps"].begin(); iter != costmap_metadata_yaml["costmaps"].end(); ++iter)
+    {
+        auto mt = *iter;
+        auto height = mt["height"].as<double>();
+        bool first = true;
+        double x;
+        double y;
+        for(auto oi = mt["origin"].begin(); iter != mt["origin"].end(); ++oi)
+        {
+            auto ox = *oi;
+            if (first){first = false; x = ox.second.as<double>(); continue;}
+            y = ox.second.as<double>();
+        }
+        auto origin = torch::tensor({x,y}, torch::TensorOptions().device(*device));
+        auto resolution = torch::tensor({mt["resolution"].as<double>()}, torch::TensorOptions().device(*device));
+        auto width = torch::tensor({mt["width"].as<double>()}, torch::TensorOptions().device(*device));
+        auto height = torch::tensor({mt["height"].as<double>()}, torch::TensorOptions().device(*device));
+        auto length_x = torch::clone(width);
+        auto length_y = torch::clone(height);
+
+        auto metadata_map = std::unordered_map<std::string, torch::Tensor>();
+        metadata_map["resolution"] = resolution;
+        metadata_map["width"] = width;
+        metadata_map["height"] = height;
+        metadata_map["origin"] = origin;
+        metadata_map["length_x"] = length_x;
+        metadata_map["length_y"] = length_y;
+        metadatas.push_back(metadata_map);
+    }
+
+    auto len_pos = pos_tensor.size(0);
+    auto len_data = data_tensor.size(0);
+    auto len_steer = steer_tensor.size(0);
+    auto len_waypoints = waypoints.size(0);
+    auto len_metadatas = metadatas.size();  //same with goals
+
 
 
 
