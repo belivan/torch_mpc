@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 # import rospy
-from torch_mpc.setup_mpc import setup_mpc
+import torch_mpc.setup_mpc as setup_mpc
 
 class BatchSamplingMPC:
     """
@@ -129,67 +129,52 @@ class BatchSamplingMPC:
         pass
 
 if __name__ == "__main__":
-    from torch_mpc.models.skid_steer import SkidSteer
-    from torch_mpc.models.kbm import KBM
-    from torch_mpc.models.steer_setpoint_throttle_kbm import SteerSetpointThrottleKBM
-    from torch_mpc.action_sampling.action_sampler import ActionSampler
+#    from torch_mpc.models.skid_steer import SkidSteer
+  #  from torch_mpc.models.kbm import KBM
+ #   from torch_mpc.models.steer_setpoint_throttle_kbm import SteerSetpointThrottleKBM
+#    from torch_mpc.action_sampling.action_sampler import ActionSampler
 
     import time
     import yaml
 
-    config_fp = 'C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml'
+    config_fp = '/home/belivan/AEC/torch_mpc/configs/costmap_speedmap.yaml'
     config = yaml.safe_load(open(config_fp, 'r'))
 
     # TODO: integrate w/ config file
     device = config['common']['device']
     batch_size = config['common']['B']
 
-    mppi = setup_mpc(config).to(device)
+    mppi = setup_mpc.setup_mpc(config).to(device)
     model = mppi.model
     cost_fn = mppi.cost_fn
     action_sampler = mppi.action_sampler
 
-    cost_fn.data['goals'] = [
-        torch.tensor([
-            [5.0, 0.0],
-            [10.0, 0.0]
-        ]).to(device),
-        torch.tensor([
-            [3.0, 0.0],
-            [4.0, 0.0]
-        ]).to(device),
-        torch.tensor([
-            [6.0, 0.0],
-            [4.0, 0.0]
-        ]).to(device)
-    ]
-
     cost_fn.data['waypoints'] = [
         torch.tensor([
-            [5.0, 0.0],
-            [10.0, 0.0]
+            [250.0, 0.0],
+            [600.0, 0.0]
         ]).to(device),
         torch.tensor([
-            [3.0, 0.0],
-            [4.0, 0.0]
+            [300.0, 0.0],
+            [700.0, 0.0]
         ]).to(device),
         torch.tensor([
-            [6.0, 0.0],
-            [4.0, 0.0]
+            [350.0, 0.0],
+            [800.0, 0.0]
         ]).to(device)
     ]
 
     print(cost_fn.can_compute_cost())
     
     cost_fn.data['local_costmap'] = {'metadata': {
-        'resolution':torch.tensor([1.0, 0.5, 2.0]),
-        'width': torch.tensor([100., 50., 200.]),
-        'height': torch.tensor([100., 50., 200.]),
-        'origin': torch.tensor([[-50., -50.], [-25., -25.], [-100., -100.]])
+        'resolution':torch.tensor([2.5]).to(device),
+        'width': torch.tensor([80.0]).to(device),
+        'height': torch.tensor([80.0]).to(device),
+        'origin': torch.tensor([-40.5, -40.5]).to(device),
+        'length_x': torch.tensor([80.0]).to(device),
+        'length_y': torch.tensor([80.0]).to(device),
     },
-                               'data': torch.zeros(3, 100, 100)}
-    
-    cost_fn.data['costmap']['data'][:, 40:60, 60:] = 10.
+                               'data': torch.zeros(1, 32, 32).to(device)}
 
     print(cost_fn.can_compute_cost())
     x = torch.zeros(batch_size, model.observation_space().shape[0]).to(device)
@@ -198,9 +183,9 @@ if __name__ == "__main__":
     U = []
 
     t0 = time.time()
-    for i in range(500):
+    for i in range(50):
         X.append(x.clone())
-        u = mppi.get_control(x)
+        u, feasables = mppi.get_control(x)
         U.append(u.clone())
         x = model.predict(x, u)
     t1 = time.time()
@@ -209,10 +194,11 @@ if __name__ == "__main__":
 
     X = torch.stack(X, dim=1).cpu()
     U = torch.stack(U, dim=1).cpu()
+    model = model.to('cpu')
 
     traj = model.rollout(x, mppi.last_controls).cpu()
 
-    print('TRAJ COST = {}'.format(cost_fn.cost(X, U)))
+    # print('TRAJ COST = {}'.format(cost_fn.cost(X, U)))
 
     du = abs(U[:, 1:] - U[:, :-1])
     print('SMOOOTHNESS = {}'.format(du.view(batch_size, -1).mean(dim=-1)))

@@ -3,7 +3,7 @@ import numpy as np
 import gym
 
 from torch_mpc.models.base import Model
-from wheeledsim_rl.util.util import dict_map
+# from wheeledsim_rl.util.util import dict_map
 
 class KBM(Model):
     """

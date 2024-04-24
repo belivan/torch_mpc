@@ -53,8 +53,8 @@ def world_to_grid(world_pos, metadata):
     res = metadata['resolution']
     nx = (metadata['length_x']/res).long()
     ny = (metadata['length_y']/res).long()
-    ox = metadata['origin'][:, 0]
-    oy = metadata['origin'][:, 1]
+    ox = metadata['origin'][0]
+    oy = metadata['origin'][1]
 
     trailing_dims = [1] * (world_pos.ndim - 2)
 

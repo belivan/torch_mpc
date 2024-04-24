@@ -3,10 +3,11 @@ import numpy as np
 import yaml
 
 # models
-from torch_mpc.models.steer_setpoint_kbm import SteerSetpointKBM
-from torch_mpc.models.steer_setpoint_throttle_kbm import SteerSetpointThrottleKBM
-from torch_mpc.models.gravity_throttle_kbm import GravityThrottleKBM
-from torch_mpc.models.actuator_delay import ActuatorDelay
+# from torch_mpc.models.steer_setpoint_kbm import SteerSetpointKBM
+# from torch_mpc.models.steer_setpoint_throttle_kbm import SteerSetpointThrottleKBM
+# from torch_mpc.models.gravity_throttle_kbm import GravityThrottleKBM
+# from torch_mpc.models.actuator_delay import ActuatorDelay
+from torch_mpc.models.kbm import KBM
 
 # sampling strategies
 from torch_mpc.action_sampling.sampling_strategies.action_library import ActionLibrary
@@ -17,12 +18,12 @@ from torch_mpc.action_sampling.action_sampler import ActionSampler
 # cost functions
 from torch_mpc.cost_functions.generic_cost_function import CostFunction
 from torch_mpc.cost_functions.cost_terms.footprint_costmap_projection import FootprintCostmapProjection
-from torch_mpc.cost_functions.cost_terms.unknown_map_projection import UnknownMapProjection
+# from torch_mpc.cost_functions.cost_terms.unknown_map_projection import UnknownMapProjection
 from torch_mpc.cost_functions.cost_terms.euclidean_distance_to_goal import EuclideanDistanceToGoal
-from torch_mpc.cost_functions.cost_terms.speed_limit import SpeedLimit
-from torch_mpc.cost_functions.cost_terms.footprint_speedmap_projection import FootprintSpeedmapProjection
-from torch_mpc.cost_functions.cost_terms.valuemap_projection import ValuemapProjection
-from torch_mpc.cost_functions.cost_terms.goal_constraint import GoalConstraint
+# from torch_mpc.cost_functions.cost_terms.speed_limit import SpeedLimit
+# from torch_mpc.cost_functions.cost_terms.footprint_speedmap_projection import FootprintSpeedmapProjection
+# from torch_mpc.cost_functions.cost_terms.valuemap_projection import ValuemapProjection
+# from torch_mpc.cost_functions.cost_terms.goal_constraint import GoalConstraint
 
 # update rules
 from torch_mpc.update_rules.mppi import MPPI
@@ -41,18 +42,24 @@ def setup_mpc(config):
     device = config['common']['device']
 
     ## setup model ##
-    if config['model']['type'] == 'SteerSetpointThrottleKBM':
-        model = SteerSetpointThrottleKBM(**config['model']['args'], dt=dt)
-    elif config['model']['type'] == 'SteerSetpointKBM':
-        model = SteerSetpointKBM(**config['model']['args'], dt=dt)
-    elif config['model']['type'] == 'GravityThrottleKBM':
-        model = GravityThrottleKBM(**config['model']['args'], dt=dt)
+    if config['model']['type'] == 'KBM':
+        L = config['model']['args']['L']
+        min_throttle = config['model']['args']['throttle_lim'][0]
+        max_throttle = config['model']['args']['throttle_lim'][1]
+        model = KBM(L=L, min_throttle=min_throttle, max_throttle=max_throttle, dt=dt, device=device)
+
+    # if config['model']['type'] == 'SteerSetpointThrottleKBM':
+    #     model = SteerSetpointThrottleKBM(**config['model']['args'], dt=dt)
+    # elif config['model']['type'] == 'SteerSetpointKBM':
+    #     model = SteerSetpointKBM(**config['model']['args'], dt=dt)
+    # elif config['model']['type'] == 'GravityThrottleKBM':
+    #     model = GravityThrottleKBM(**config['model']['args'], dt=dt)
     else:
         print('Unsupported model type {}'.format(config['model']['type']))
         exit(1)
 
-    if 'actuator_delay' in config['model'].keys():
-        model = ActuatorDelay(model=model, buf_len=config['model']['actuator_delay'])
+    # if 'actuator_delay' in config['model'].keys():
+    #     model = ActuatorDelay(model=model, buf_len=config['model']['actuator_delay'])
 
     ## setup sampler ##
     sampling_strategies = {}
@@ -88,26 +95,26 @@ def setup_mpc(config):
                 term['weight'],
                 FootprintCostmapProjection(**params)
             ))
-        elif term['type'] == 'SpeedLimit':
-            terms.append((
-                term['weight'],
-                SpeedLimit(**params)
-            ))
-        elif term['type'] == 'FootprintSpeedmapProjection':
-            terms.append((
-                term['weight'],
-                FootprintSpeedmapProjection(**params)
-            ))
-        elif term['type'] == 'ValuemapProjection':
-            terms.append((
-                term['weight'],
-                ValuemapProjection(**params)
-            ))
-        elif term['type'] == 'GoalConstraint':
-            terms.append((
-                term['weight'],
-                GoalConstraint(**params)
-            ))
+        # elif term['type'] == 'SpeedLimit':
+        #     terms.append((
+        #         term['weight'],
+        #         SpeedLimit(**params)
+        #     ))
+        # elif term['type'] == 'FootprintSpeedmapProjection':
+        #     terms.append((
+        #         term['weight'],
+        #         FootprintSpeedmapProjection(**params)
+        #     ))
+        # elif term['type'] == 'ValuemapProjection':
+        #     terms.append((
+        #         term['weight'],
+        #         ValuemapProjection(**params)
+        #     ))
+        # elif term['type'] == 'GoalConstraint':
+        #     terms.append((
+        #         term['weight'],
+        #         GoalConstraint(**params)
+        #     ))
         else:
             print('Unsupported cost term type {}'.format(term['type']))
             exit(1)

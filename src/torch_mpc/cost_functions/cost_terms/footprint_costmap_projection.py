@@ -52,10 +52,10 @@ class FootprintCostmapProjection:
         R = torch.stack([
             torch.stack([th.cos(), -th.sin()], dim=-1),
             torch.stack([th.sin(), th.cos()], dim=-1),
-        ], dim=-2) #[B x K x T x 2 x 2]
+        ], dim=-2).to(traj.device) #[B x K x T x 2 x 2]
 
         R_expand = R.view(*tdims, 1, 2, 2) #[B x K x T x F x 2 x 2]
-        footprint_expand = self.footprint.view(1, 1, 1, nf, 2, 1) #[B x K x T x F x 2 x 1]
+        footprint_expand = self.footprint.view(1, 1, 1, nf, 2, 1).to(traj.device) #[B x K x T x F x 2 x 1]
 
         footprint_rot = (R_expand @ footprint_expand).view(*tdims, nf, 2) #[B x K x T X F x 2]
         footprint_traj = pos.view(*tdims, 1, 2) + footprint_rot
@@ -87,7 +87,7 @@ class FootprintCostmapProjection:
         metadata = data[self.costmap_key]['metadata']
 
         world_pos = states2[..., :, :3] # x, y, th
-        footprint_pos = self.apply_footprint(world_pos) #[B x K x T x F x 2]
+        footprint_pos = self.apply_footprint(world_pos).to(self.device) #[B x K x T x F x 2]
         grid_pos, invalid_mask = world_to_grid(footprint_pos, metadata)
 
         # Switch grid axes to align with robot centric axes: +x forward, +y left
@@ -95,12 +95,12 @@ class FootprintCostmapProjection:
 
         # Assign invalid costmap indices to a temp value and then set them to invalid cost
         grid_pos[invalid_mask] = 0
-        grid_pos = grid_pos.long()
-        idx0 = torch.arange(grid_pos.shape[0])
+        grid_pos = grid_pos.long().to(self.device)
+        idx0 = torch.arange(grid_pos.shape[0]).to(self.device)
         ndims = len(grid_pos.shape)-2
-        idx0 = idx0.view(idx0.shape[0], *[1]*ndims)
+        idx0 = idx0.view(idx0.shape[0], *[1]*ndims).to(self.device)
 
-        new_costs = torch.clone(costmap[idx0, grid_pos[...,0], grid_pos[...,1]])
+        new_costs = torch.clone(costmap[idx0, grid_pos[...,0], grid_pos[...,1]]).to(self.device)
         new_costs[invalid_mask] = 0.
 
         new_feasible = (new_costs < self.cost_thresh).all(dim=-1).all(dim=-1)

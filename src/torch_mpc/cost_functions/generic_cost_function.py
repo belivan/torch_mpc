@@ -35,6 +35,11 @@ class CostFunction:
         for cterm, cweight in zip(self.cost_terms, self.cost_weights):
             new_cost, new_feasible = cterm.cost(states, actions, feasible, self.data)
 
+            # new_cost.to(self.device)
+            # new_feasible.to(self.device)
+            # costs.to(self.device)
+            # feasible.to(self.device)
+            
             costs += cweight * new_cost
             feasible = feasible & new_feasible
 
