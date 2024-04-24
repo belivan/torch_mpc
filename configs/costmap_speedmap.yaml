@@ -148,3 +148,5 @@ update_rule:
         temperature: 0.1
         
 recovery_behavior: []
+
+data_output_dir : ../data/mppi_inputs  # Hope I can use relative path
