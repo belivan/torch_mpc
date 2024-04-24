@@ -7,7 +7,6 @@ int main() {
 
     // This script might need adjustment to work properly
     // See what inputs are required for the cost function classes
-
     std::vector<std::pair<double, std::shared_ptr<CostTerm>>> cost_terms = {
        {2.0, std::make_shared<EuclideanDistanceToGoal>()},
        // {1.0, std::make_shared<FootprintSpeedmapProjection>()},
@@ -54,7 +53,7 @@ int main() {
     metadata["length_y"] = torch::tensor({100., 50., 200.}); //might neeed adjustment
 
     Values val3 = val;
-    val3.data = torch::zeros({3, 100, 100});
+    val3.data = torch::zeros({1, 100, 100});
     val3.metadata = metadata;
 
     cfn.data.keys["local_costmap"] = val3;

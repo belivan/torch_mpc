@@ -13,19 +13,21 @@ def quat_to_yaw(quat):
 
 if __name__ == 'main':
     # open config file
-    config_dir = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml"
-    with open('config.yaml') as f:
-        config = yaml.load(f, Loader=yaml.FullLoader)
+    # config_dir = "aec/torch_mpc/configs/costmap_speedmap.yaml"
+    # with open('config.yaml') as f:
+    #     config = yaml.load(f, Loader=yaml.FullLoader)
 
-    data_output_dir = config['data_output_dir']
+    # data_output_dir = config['data_output_dir']
+    print("welcome")
     state_topic = '/integrated_to_init'
     steer_topic = '/ros_talon/current_position'
     costmaps_topic = '/local_costmap'
     waypoints_topic = '/next_waypoints/odom'
+    print("waypoints stuff")
     
     topics = [state_topic, steer_topic, costmaps_topic, waypoints_topic]
     
-    run_dir = "C:/Users/anton/Downloads/2024-04-17-14-31-20_to_warehouse_loop/2024-04-17-14-31-20_1.bag"
+    run_dir = "~/aec/data/2024-04-17-14-31-20_1.bag"
     # bfps = sorted([x for x in os.listdir(run_dir) if x[-4:] == '.bag'])
     
     curr_s = 0.

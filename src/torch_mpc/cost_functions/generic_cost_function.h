@@ -63,6 +63,7 @@ public:
         auto feasible = torch::ones({ states.size(0), states.size(1) }, torch::kBool).to(device);
         // std::cout << "made costs and feasible" << std::endl;
         //torch::Tensor new_cost, new_feasible;
+        // std::cout << "costs size" << costs.sizes() << std::endl;
         for (int i = 0; i < cost_terms.size(); ++i) {
             // std::cout << "enter loop " << i << std::endl;
             //std::cout << "states" << states.size(0) << std::endl;
@@ -73,11 +74,11 @@ public:
                 std::cout << "maybe nullptr error?" << std::endl;
             }
             // std::cout << "not nullptr costterms" << std::endl;
-            auto [new_cost, new_feasible] = cost_terms[i]->cost(states, actions, feasible, data); // THIS IS THE LINE WHERE IT CRASHES
+            auto [new_cost, new_feasible] = cost_terms[i]->cost(states, actions, feasible, data); // THIS IS THE LINE WHERE IT CRASHES...?
             // std::cout << "newcost in loop" << std::endl;
             costs += cost_weights[i] * new_cost;
             // std::cout << "add to costs" << std::endl;
-            feasible = feasible.logical_and(new_feasible);
+            feasible = feasible & new_feasible;
             // std::cout << "feasible update" << std::endl;
             // std::cout << feasible.sizes() << std::endl;
             // std::cout << "costs" << std::endl;

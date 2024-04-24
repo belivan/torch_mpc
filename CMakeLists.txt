@@ -4,7 +4,7 @@ project(torch_mpc LANGUAGES CXX CUDA)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-list(APPEND CMAKE_PREFIX_PATH "C:/Users/anton/Documents/SPRING24/AEC/project_resources/libtorch-win-shared-with-deps-2.2.1+cu121/libtorch")
+list(APPEND CMAKE_PREFIX_PATH "~/libtorch")
 find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
 

@@ -75,8 +75,8 @@ namespace utils
         auto res = metadata.at("resolution");
         auto nx = (metadata.at("length_x") / res).to(torch::kLong);
         auto ny = (metadata.at("length_y") / res).to(torch::kLong);
-        auto ox = metadata.at("origin").index({torch::indexing::Slice(), 0});
-        auto oy = metadata.at("origin").index({torch::indexing::Slice(), 1});
+        auto ox = metadata.at("origin").index({0});
+        auto oy = metadata.at("origin").index({0});
         
         std::vector<int64_t> array({-1});
         for (int i = 0; i < world_pos.dim() - 2; ++i) {
