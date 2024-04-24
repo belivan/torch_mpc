@@ -16,3 +16,5 @@ libtorch/
 **build_action_sampling/
 **.egg-info/
 **CMakelists.txt
+**build
+**build_2
