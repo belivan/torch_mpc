@@ -2,7 +2,8 @@ import torch
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-import rospy
+# import rospy
+from torch_mpc.setup_mpc import setup_mpc
 
 class BatchSamplingMPC:
     """
@@ -136,47 +137,62 @@ if __name__ == "__main__":
     import time
     import yaml
 
-    config_fp = '/home/atv/physics_atv_ws/src/control/torch_mpc/configs/test_config.yaml'
+    config_fp = 'C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml'
     config = yaml.safe_load(open(config_fp, 'r'))
-
-    class TestCost:
-        def __init__(self):
-            self.device = 'cpu'
-        def cost(self, traj, controls):
-            stage_cost = self.stage_cost(traj, controls)
-            term_cost = self.term_cost(traj[..., -1, :])
-            return stage_cost.sum(dim=-1) + term_cost
-        def stage_cost(self, traj, controls):
-#            state_cost = (traj[...,0] - traj[..., 0, [0]]) * 10 #drive fast in x
-
-#            state_cost += (traj[..., -1, [1]].abs() < 1.).float() * 1e6 #don't end in the middle
-
-#            state_cost = torch.min((traj[...,1] - 1.5).abs(), (traj[..., 1] + 1.5).abs()) * 10.
-
-            state_cost = (traj[...,0]) + 10. * (traj[...,2] - np.pi).abs() #drive fast in -x
-
-#            control_cost = (controls.pow(2) + torch.tensor([[1.0, 100.0]], device=self.device)).sum(dim=-1) #Dont be jerky
-            control_cost = torch.zeros_like(state_cost)
-            return state_cost + control_cost
-        def term_cost(self, tstates):
-            return (tstates[..., 1]) * 0.
-
-        def to(self, device):
-            self.device = device
-            return self
-
 
     # TODO: integrate w/ config file
     device = config['common']['device']
     batch_size = config['common']['B']
 
-    # kbm = SteerSetpointThrottleKBM(L=3.0, steer_lim=[-0.52, 0.52], steer_rate_lim=0.2, dt=0.1).to(device)
-    kbm = KBM().to(device)
-    cfn = TestCost().to(device)
-    action_sampler = ActionSampler(config)
+    mppi = setup_mpc(config).to(device)
+    model = mppi.model
+    cost_fn = mppi.cost_fn
+    action_sampler = mppi.action_sampler
 
-    mppi = BatchSamplingMPC(model=kbm, cost_fn=cfn, action_sampler=action_sampler, config=config)
-    x = torch.zeros(batch_size, kbm.observation_space().shape[0]).to(device)
+    cost_fn.data['goals'] = [
+        torch.tensor([
+            [5.0, 0.0],
+            [10.0, 0.0]
+        ]).to(device),
+        torch.tensor([
+            [3.0, 0.0],
+            [4.0, 0.0]
+        ]).to(device),
+        torch.tensor([
+            [6.0, 0.0],
+            [4.0, 0.0]
+        ]).to(device)
+    ]
+
+    cost_fn.data['waypoints'] = [
+        torch.tensor([
+            [5.0, 0.0],
+            [10.0, 0.0]
+        ]).to(device),
+        torch.tensor([
+            [3.0, 0.0],
+            [4.0, 0.0]
+        ]).to(device),
+        torch.tensor([
+            [6.0, 0.0],
+            [4.0, 0.0]
+        ]).to(device)
+    ]
+
+    print(cost_fn.can_compute_cost())
+    
+    cost_fn.data['local_costmap'] = {'metadata': {
+        'resolution':torch.tensor([1.0, 0.5, 2.0]),
+        'width': torch.tensor([100., 50., 200.]),
+        'height': torch.tensor([100., 50., 200.]),
+        'origin': torch.tensor([[-50., -50.], [-25., -25.], [-100., -100.]])
+    },
+                               'data': torch.zeros(3, 100, 100)}
+    
+    cost_fn.data['costmap']['data'][:, 40:60, 60:] = 10.
+
+    print(cost_fn.can_compute_cost())
+    x = torch.zeros(batch_size, model.observation_space().shape[0]).to(device)
 
     X = []
     U = []
@@ -186,7 +202,7 @@ if __name__ == "__main__":
         X.append(x.clone())
         u = mppi.get_control(x)
         U.append(u.clone())
-        x = kbm.predict(x, u)
+        x = model.predict(x, u)
     t1 = time.time()
 
     print('TIME = {:.6f}s'.format(t1 - t0))
@@ -194,9 +210,9 @@ if __name__ == "__main__":
     X = torch.stack(X, dim=1).cpu()
     U = torch.stack(U, dim=1).cpu()
 
-    traj = kbm.rollout(x, mppi.last_controls).cpu()
+    traj = model.rollout(x, mppi.last_controls).cpu()
 
-    print('TRAJ COST = {}'.format(cfn.cost(X, U)))
+    print('TRAJ COST = {}'.format(cost_fn.cost(X, U)))
 
     du = abs(U[:, 1:] - U[:, :-1])
     print('SMOOOTHNESS = {}'.format(du.view(batch_size, -1).mean(dim=-1)))
@@ -219,7 +235,7 @@ if __name__ == "__main__":
     axs[2].set_title("States")
 
     colors = 'rgbcmyk'
-    for xi, name in enumerate(['X', 'Y', 'Th', 'V', 'W']):
+    for xi, name in enumerate(['X', 'Y', 'Th']):
         c = colors[xi % len(colors)]
         for b in range(batch_size):
             axs[2].plot(X[b, :, xi], c=c, label=name if b == 0 else None)
@@ -228,5 +244,5 @@ if __name__ == "__main__":
     axs[1].legend()
     axs[2].legend()
 
-    axs[0].set_aspect('equal')
+    # axs[0].set_aspect('equal')
     plt.show()
