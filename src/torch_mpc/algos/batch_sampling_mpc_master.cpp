@@ -1,6 +1,7 @@
 #include "batch_sampling_mpc.h"
 #include "../setup_mpc.h"
 #include <filesystem>
+#include <cmath>
 namespace fs = std::filesystem;
 
 int main() 
@@ -21,8 +22,6 @@ int main()
 
     const int batch_size = config["common"]["B"].as<int>();
 
-
-
     fs::path data_dir_path = "C:/Users/anton/Documents/SPRING24/AEC/run_3";
     fs::path costmaps_dir = data_dir_path / "costmaps/metadata.yaml";
     fs::path data_dir = data_dir_path / "data/data.pth";
@@ -32,7 +31,7 @@ int main()
 
     // Load generated sampele data
     // Open costmaps
-    auto costmap_metadata_yaml = YAML::LoadFile(costmaps.string());
+    auto costmap_metadata_yaml = YAML::LoadFile(costmaps_dir.string());
 
     // Open data
 
@@ -41,15 +40,15 @@ int main()
     auto data_tensor = data_jit.attr("data").toTensor();
     std::cout << data_tensor.sizes() << std::endl;
     // Open pos
-    torch::jit::Module pos_jit = torch::jit::load(pos.string());
+    torch::jit::Module pos_jit = torch::jit::load(pos_dir.string());
     auto pos_tensor = pos_jit.attr("data").toTensor();
     std::cout << pos_tensor.sizes() << std::endl;
     // Open steer
-    torch::jit::Module steer_jit = torch::jit::load(steer.string());
+    torch::jit::Module steer_jit = torch::jit::load(steer_dir.string());
     auto steer_tensor = steer_jit.attr("data").toTensor();
     std::cout << steer_tensor.sizes() << std::endl;
     // Open waypoints
-    auto waypoints_yaml = YAML::LoadFile(waypoints.string());
+    auto waypoints_yaml = YAML::LoadFile(waypoints_dir.string());
 
     std::cout << "Loaded data" << std::endl;
     // waypoints
@@ -70,7 +69,6 @@ int main()
     for(auto iter = costmap_metadata_yaml["costmaps"].begin(); iter != costmap_metadata_yaml["costmaps"].end(); ++iter)
     {
         auto mt = *iter;
-        auto height = mt["height"].as<double>();
         bool first = true;
         double x;
         double y;
@@ -103,21 +101,11 @@ int main()
     auto len_waypoints = waypoints.size(0);
     auto len_metadatas = metadatas.size();  //same with goals
 
+    int interval_data = std::ceil(static_cast<double>(len_pos) / len_data);
+    int interval_steer = std::ceil(static_cast<double>(len_pos) / len_steer);
+    int interval_waypoints = std::ceil(static_cast<double>(len_pos) / len_waypoints);
+    int interval_metadatas = std::ceil(static_cast<double>(len_pos) / len_metadatas);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // Creating MPC
 
     auto mppi = setup_mpc(config); // returns a shared pointer to BatchSamplingMPC
     auto model = mppi->model; // returns a shared pointer to Model
@@ -126,132 +114,70 @@ int main()
     mppi->to(*device);
 
     // Testing can_compute_cost and inserting data
-    Values val;
+    std::vector<torch::Tensor> X;
+    std::vector<torch::Tensor> U;
+    std::vector<torch::Tensor> TRAJ;
+    std::string dir_path = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/src/torch_mpc/algos/algos_data";
+    for(int i = 0; i < len_pos; ++i){
+        auto current_pos = pos_tensor[i].to(*device);
+        auto current_data = data_tensor[i / interval_data].to(*device);
+        auto current_steer = steer_tensor[i / interval_steer].to(*device);
+        auto current_waypoints = waypoints[i / interval_waypoints];
+        auto current_metadata = metadatas[i / interval_metadatas];
 
+        Values val;
+        val.metadata = current_metadata;
+        val.data = current_data;
+        cfn->data.keys["local_costmap"] = val;
 
-    // Simulate data loading
-    torch::Tensor goal1 = torch::tensor({{250.0, 0.0}, 
-                                        {600.0, 0.0}}, torch::TensorOptions().device(*device));
-    torch::Tensor goal2 = torch::tensor({{300.0, 0.0}, 
-                                        {700.0, 0.0}}, torch::TensorOptions().device(*device));
-    torch::Tensor goal3 = torch::tensor({{350.0, 0.0}, 
-                                        {800.0, 0.0}}, torch::TensorOptions().device(*device));
+        Values val_waypoints;
+        val_waypoints.data = current_waypoints;
+        cfn->data.keys["waypoints"] = val_waypoints;
 
-    auto goals= torch::stack({goal1, goal2, goal3}, 0);
-    val.data = goals;
-    
-    cfn->data.keys["waypoints"] = val;
+        Values val_goals;
+        val_goals.data = goals[i / interval_waypoints];
+        cfn->data.keys["goals"] = val_goals;
 
+        torch::Tensor x0 = torch::empty({batch_size, 3}, torch::TensorOptions().device(*device));
 
-    Values val2 = val;
-    cfn->data.keys["goals"] = val2;
+        for (int i = 0; i < batch_size; i++) {
+            x0[i][0] = current_pos[0];
+            x0[i][1] = current_pos[1];
+            x0[i][2] = current_steer[0]; // Assuming current_steer is a tensor with one element.
+        }
 
-    // std::cout << "Check 2" << std::endl;
-    // std::cout << cfn->can_compute_cost() << std::endl;
-    // std::cout << "Expected: 0" << std::endl;
-    
-    std::unordered_map<std::string, torch::Tensor> metadata;
-    metadata["resolution"] = torch::tensor({2.5}, torch::TensorOptions().device(*device));
-    metadata["width"] = torch::tensor({80.0}, torch::TensorOptions().device(*device));
-    metadata["height"] = torch::tensor({80.0}, torch::TensorOptions().device(*device));
-    metadata["origin"] = torch::tensor({-40.5, -40.5}, torch::TensorOptions().device(*device));
-    metadata["length_x"] = torch::tensor({80.0}, torch::TensorOptions().device(*device));
-    metadata["length_y"] = torch::tensor({80.0}, torch::TensorOptions().device(*device));
+        torch::Tensor x_list = torch::empty({batch_size, 3}, torch::TensorOptions().device(*device));
+        torch::Tensor u_list = torch::empty({batch_size, 2}, torch::TensorOptions().device(*device));
 
-    Values val3 = val;
-    val3.data = torch::zeros({1, 32, 32}, torch::TensorOptions().device(*device));
-    val3.metadata = metadata;
+        torch::Tensor x = x0.clone();
+        for (int i = 0; i < 50; i++)
+        {
+            X.push_back(x.clone());
+            auto [u, feasible] = mppi->get_control(x);
+            U.push_back(u.clone());
+            x = model->predict(x, u);
+        }
 
-    cfn->data.keys["local_costmap"] = val3;
+        auto X_list = torch::stack(x_list, 1).to(*device);
+        auto U_list = torch::stack(u_list, 1).to(*device);
 
-    auto x = torch::zeros({batch_size, model->observation_space()}, torch::TensorOptions().device(*device));
+        auto traj = model->rollout(x0, mppi->last_controls);
 
-    std::vector<torch::Tensor> X; // X is the state
-    std::vector<torch::Tensor> U; // U is the control input
-
-    auto t0 = std::chrono::high_resolution_clock::now();
-
-    for (int i = 0; i < 50; i++)
-    {
-        X.push_back(x.clone());
-        auto [u, feasible] = mppi->get_control(x);
-        U.push_back(u.clone());
-        x = model->predict(x, u);
+        X.push_back(X_list);
+        U.push_back(U_list);
+        TRAJ.push_back(traj);
     }
-    auto t1 = std::chrono::high_resolution_clock::now();
 
-    // std::cout << "TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << " milliseconds" << std::endl;
 
     auto X_tensor = torch::stack(X, 1).to(torch::kCPU);
     auto U_tensor = torch::stack(U, 1).to(torch::kCPU);
+    auto TRAJ_tensor = torch::stack(TRAJ, 1).to(torch::kCPU);
 
-    // std::cout << "X: " << X_tensor.sizes() << std::endl;
-    // std::cout << "U: " << U_tensor.sizes() << std::endl;
-
-    // std::cout << "Rolling out with model" << std::endl;
-    model->to(torch::kCPU);
-    auto traj = model->rollout(x, mppi->last_controls).to(torch::kCPU);
-
-    // std::cout << "TRAJ COST = " << std::endl;
-    // std::cout << "X_tensor" << X_tensor.sizes() << std::endl;
-    // std::cout << "U_tensor" << U_tensor.sizes() << std::endl;
-    // std::cout << cfn->cost(X_tensor, U_tensor)<< std::endl;
-    // auto result = cfn->cost(X_tensor, U_tensor);
-    // std::cout << "TRAJ COST = " << result.first.sizes() << std::endl;
-    // std::cout << "TRAJ FEASIBLE = " << result.second.sizes() << std::endl;
-
-    auto du = torch::abs(U_tensor.slice(1,1) - U_tensor.slice(1,0,-1));
-
-    // std::cout << "SMOOTHNESS = " << du.view({batch_size, -1}).mean(-1) << std::endl;
-
-    auto t3 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 100; i++)
-    {
-        auto u = mppi->get_control(x);
-    }
-    auto t4 = std::chrono::high_resolution_clock::now();
-    // std::cout << "ITR TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds" << std::endl;
-
-    std::string dir_path = "/home/pearlfranz/aec/torch_mpc/src/torch_mpc/algos/algos_data/";
-    torch::save(X_tensor, dir_path + "X.pt");
-    torch::save(U_tensor, dir_path + "U.pt");
-    torch::save(traj, dir_path + "traj.pt");
+    torch::save(X_tensor, dir_path+"X.pt");
+    torch::save(U_tensor, dir_path+"U.pt");
+    torch::save(TRAJ_tensor, dir_path+"TRAJ.pt");
 
     // std::cout << "Saved data" << std::endl;
 
     return 0;
 }
-
-
-
-    // class TestCost
-    // {   
-    //     private:
-    //         torch::Device device;
-
-    //     public:
-    //         TestCost()
-    //         {
-    //             device = torch::kCPU;
-    //         }
-
-    //         torch::Tensor cost(torch::Tensor traj, torch::Tensor controls){
-    //             auto stage_cost = stage_cost(traj, controls);
-    //             auto term_cost = term_cost(traj.index({"...", -1, torch::indexing::Slice()}));
-    //             return stage_cost.sum(-1) + term_cost;
-    //         }
-    //         torch::Tensor stage_cost(const torch::Tensor& traj, const torch::Tensor& controls) {
-    //             // drive fast in -x direction
-    //             auto state_cost = traj.index({"...", 0}) + 10.0 * (traj.index({"...", 2}) - M_PI).abs();
-    //             auto control_cost = torch::zeros_like(state_cost); // Assume control cost is simplified to zero tensor
-
-    //             return state_cost + control_cost;
-    //         }
-    //         torch::Tensor term_cost(const torch::Tensor& tstates) {
-    //             return tstates.index({"...", 1}) * 0.0;
-    //         }
-    //         TestCost& to(const torch::Device& device) {
-    //             this->device = device;
-    //             return *this;
-    //         }
-    // };

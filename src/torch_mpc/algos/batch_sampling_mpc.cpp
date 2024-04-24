@@ -3,7 +3,7 @@
 
 int main() 
 {
-    std::string config_file = "/home/pearlfranz/aec/torch_mpc/configs/costmap_speedmap.yaml"; // specify the path to the config file
+    std::string config_file = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml"; // specify the path to the config file
 
     YAML::Node config = YAML::LoadFile(config_file);
     
@@ -108,7 +108,7 @@ int main()
     // std::cout << mpc << std::endl; this won't print anything because the << operator is not defined for BatchSamplingMPC
 
     // Another script shows auto states = torch::zeros({3, 4, 100, 5});
-    auto x = torch::zeros({batch_size, model->observation_space()}, torch::TensorOptions().device(*device));
+    auto x0 = torch::zeros({batch_size, model->observation_space()}, torch::TensorOptions().device(*device));
     // std::cout << x.sizes() << std::endl;
     // auto x = torch::zeros({batch_size, 4, 100, 5}, torch::TensorOptions().device(*device));
     // x.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
@@ -118,7 +118,7 @@ int main()
 
     std::vector<torch::Tensor> X; // X is the state
     std::vector<torch::Tensor> U; // U is the control input
-
+    auto x = x0.clone();
     // std::cout << "Starting MPC" << std::endl;
     auto t0 = std::chrono::high_resolution_clock::now();
     // for (int i = 0; i < 500; i++)
@@ -142,7 +142,7 @@ int main()
 
     // std::cout << "Rolling out with model" << std::endl;
     model->to(torch::kCPU);
-    auto traj = model->rollout(x, mppi->last_controls).to(torch::kCPU);
+    auto traj = model->rollout(x0, mppi->last_controls).to(torch::kCPU);
 
     // std::cout << "TRAJ COST = " << std::endl;
     // std::cout << "X_tensor" << X_tensor.sizes() << std::endl;
@@ -152,19 +152,19 @@ int main()
     // std::cout << "TRAJ COST = " << result.first.sizes() << std::endl;
     // std::cout << "TRAJ FEASIBLE = " << result.second.sizes() << std::endl;
 
-    auto du = torch::abs(U_tensor.slice(1,1) - U_tensor.slice(1,0,-1));
+    // auto du = torch::abs(U_tensor.slice(1,1) - U_tensor.slice(1,0,-1));
 
     // std::cout << "SMOOTHNESS = " << du.view({batch_size, -1}).mean(-1) << std::endl;
 
-    auto t3 = std::chrono::high_resolution_clock::now();
-    for (int i = 0; i < 100; i++)
-    {
-        auto u = mppi->get_control(x);
-    }
-    auto t4 = std::chrono::high_resolution_clock::now();
+    // auto t3 = std::chrono::high_resolution_clock::now();
+    // for (int i = 0; i < 100; i++)
+    // {
+    //     auto u = mppi->get_control(x);
+    // }
+    // auto t4 = std::chrono::high_resolution_clock::now();
     // std::cout << "ITR TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds" << std::endl;
 
-    std::string dir_path = "/home/pearlfranz/aec/torch_mpc/src/torch_mpc/algos/algos_data/";
+    std::string dir_path = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/src/torch_mpc/algos/algos_data";
     torch::save(X_tensor, dir_path + "X.pt");
     torch::save(U_tensor, dir_path + "U.pt");
     torch::save(traj, dir_path + "traj.pt");
