@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import time
 import rospy
+
+# from torch_mpc.models.kbm import KBM
 class BatchMPPI:
     '''MPPI controller based on Algorithm 2 in [1].
     
@@ -300,17 +302,25 @@ if __name__ == "__main__":
     device = 'cuda'
 
     batch_size = 8
+#     mppi_params = {
+# #        'sys_noise':torch.tensor([0.1, 0.1, 0.1]),
+#         'sys_noise':torch.tensor([0.1, 0.1]),
+#         'temperature':1.0,
+#         'use_ou':False, 
+#         'ou_alpha':0.9,
+#         'ou_scale':10.0,
+#         'd_ou_scale':5.0,
+#     }
     mppi_params = {
-#        'sys_noise':torch.tensor([0.1, 0.1, 0.1]),
-        'sys_noise':torch.tensor([0.1, 0.1]),
-        'temperature':1.0,
-        'use_ou':False, 
-        'ou_alpha':0.9,
-        'ou_scale':10.0,
-        'd_ou_scale':5.0,
+        'resolution':2.5,
+        'width':80.0,
+        'height':80.0,
+        'origin':torch.tensor([-40.5, -40.5]),
+        'length_x':80.0,
+        'length_y':80.0
     }
 
-    kbm = SteerSetpointKBM(L=3.0, v_target_lim=[1.0, 5.0], steer_lim=[-0.52, 0.52], steer_rate_lim=0.2, dt=0.15).to(device)
+    kbm = KBM(L=3.0, min_throttle=0., max_throttle=1., max_steer=0.3, dt=0.1).to(device)
 #    kbm = CliffordKBM(Lf=0.5, Lr=0.5, steer_lim=[-0.52, 0.52], steer_rate_lim=0.2, dt=0.15).to(device)
 
     cfn = TestCost().to(device)
@@ -330,10 +340,14 @@ if __name__ == "__main__":
 
     print('TIME = {:.6f}s'.format(t1 - t0))
 
-    X = torch.stack(X, dim=1).cpu()
-    U = torch.stack(U, dim=1).cpu()
+    # X = torch.stack(X, dim=1).cpu()
+    # U = torch.stack(U, dim=1).cpu()
 
-    traj = kbm.rollout(x, mppi.last_controls).cpu()
+    X = torch.stack(X, dim=1).to(device)
+    U = torch.stack(U, dim=1).to(device)
+
+    # traj = kbm.rollout(x, mppi.last_controls).cpu()
+    traj = kbm.rollout(x, mppi.last_controls).to(device)
 
     print('TRAJ COST = {}'.format(cfn.cost(X, U)))
 
@@ -345,6 +359,11 @@ if __name__ == "__main__":
         u = mppi.get_control(x)
     t4 = time.time()
     print('ITR TIME = {:.6f}s'.format((t4 - t3)/100.))
+
+    dir_path = "/home/pearlfranz/aec/torch_mpc/src/torch_mpc/algos/algos_data/"
+    torch.save(X, dir_path + "X.pt")
+    torch.save(U, dir_path + "U.pt")
+    torch.save(traj, dir_path + "traj.pt")
 
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
     axs[0].set_title("Traj")
@@ -359,7 +378,7 @@ if __name__ == "__main__":
     axs[2].set_title("States")
 
     colors = 'rgbcmyk'
-    for xi, name in enumerate(['X', 'Y', 'Th', 'V', 'W']):
+    for xi, name in enumerate(['X', 'Y', 'Th']):
         c = colors[xi % len(colors)]
         for b in range(batch_size):
             axs[2].plot(X[b, :, xi], c=c, label=name if b == 0 else None)
