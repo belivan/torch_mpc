@@ -44,7 +44,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
 {
     // call this function to set up an MPC instance from the config yaml
     const std::string device_config = config["common"]["device"].as<std::string>();
-    std::cout << "Loaded config at MPC Helper" << std::endl;
+    // std::cout << "Loaded config at MPC Helper" << std::endl;
 
     std::optional<torch::Device> device;
 
@@ -60,7 +60,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     const double dt = config["common"]["dt"].as<double>();
     
     // setup model
-    std::cout << "Setting up model" << std::endl;
+    // std::cout << "Setting up model" << std::endl;
 
     std::shared_ptr<Model> model;
     if (config["model"]["type"].as<std::string>() == "KBM")
@@ -75,7 +75,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         
         model = std::make_shared<KBM>(L, min_throttle, max_throttle, 
                                             max_steer, dt, *device);
-        std::cout << "Created KBM" << std::endl;
+        // std::cout << "Created KBM" << std::endl;
     }
     // Not implemented yet
     // else if (config["model"]["type"].as<std::string>() == "GravityThrottleKBM")
@@ -103,17 +103,17 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     // {auto model = std::make_unique<ActuatorDelay>(model, config["model"]["actuator_delay"].as<std::vector<double>>());}
 
     // setup sampler
-    std::cout << "Setting up action sampler" << std::endl;
+    // std::cout << "Setting up action sampler" << std::endl;
     std::unordered_map<std::string, std::shared_ptr<SamplingStrategy>> sampling_strategies;
     for(auto iter = config["sampling_strategies"]["strategies"].begin(); iter != config["sampling_strategies"]["strategies"].end(); ++iter)
     {
-        std::cout << "Setting up sampling strategy" << std::endl;
+        // std::cout << "Setting up sampling strategy" << std::endl;
         auto sv = *iter;
 
         std::string type = sv["type"].as<std::string>();
         if (type == "UniformGaussian")
         {
-            std::cout << "Setting up UniformGaussian" << std::endl;
+            // std::cout << "Setting up UniformGaussian" << std::endl;
             const int K = sv["args"]["K"].as<int>();
             
             const std::vector<double> scale = sv["args"]["scale"].as<std::vector<double>>();
@@ -123,7 +123,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         }
         else if (type == "ActionLibrary")
         {
-            std::cout << "Setting up ActionLibrary" << std::endl;
+            // std::cout << "Setting up ActionLibrary" << std::endl;
             const int K = sv["args"]["K"].as<int>();
             
             std::string path = sv["args"]["path"].as<std::string>();
@@ -133,7 +133,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         }
         else if (type == "GaussianWalk")
         {
-            std::cout << "Setting up GaussianWalk" << std::endl;
+            // std::cout << "Setting up GaussianWalk" << std::endl;
             const int K = sv["args"]["K"].as<int>();
             
             const std::vector<double> scale = sv["args"]["scale"].as<std::vector<double>>();
@@ -159,7 +159,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     // ActionSampler action_sampler(sampling_strategies);
 
     // setup cost function
-    std::cout << "Setting up cost function" << std::endl;
+    // std::cout << "Setting up cost function" << std::endl;
     std::vector<std::pair<double, std::shared_ptr<CostTerm>>> terms;
     for(auto iter = config["cost_function"]["terms"].begin(); iter != config["cost_function"]["terms"].end(); ++iter)
     {
@@ -177,12 +177,12 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
 
         if (type == "EuclideanDistanceToGoal")
         {
-            std::cout << "Setting up EuclideanDistanceToGoal" << std::endl;
+            // std::cout << "Setting up EuclideanDistanceToGoal" << std::endl;
             terms.push_back({weight, std::make_shared<EuclideanDistanceToGoal>(*device)});
         }
         else if (type == "FootprintSpeedmapProjection" && !params.IsNull() && params.size()>0)
         {
-            std::cout << "Setting up FootprintSpeedmapProjection" << std::endl;
+            // std::cout << "Setting up FootprintSpeedmapProjection" << std::endl;
             auto length = params["length"].as<double>();
             auto width = params["width"].as<double>();
             auto length_offset = params["length_offset"].as<double>();
@@ -196,7 +196,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
         }
         else if (type == "FootprintCostmapProjection" && !params.IsNull() && params.size()>0)
         {
-            std::cout << "Setting up FootprintCostmapProjection" << std::endl;
+            // std::cout << "Setting up FootprintCostmapProjection" << std::endl;
             auto length = params["length"].as<double>();
             auto width = params["width"].as<double>();
             auto length_offset = params["length_offset"].as<double>();
@@ -227,7 +227,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
     auto cost_fn = std::make_shared<CostFunction>(terms, *device);
 
     // setup update rules
-    std::cout << "Setting up update rule" << std::endl;
+    // std::cout << "Setting up update rule" << std::endl;
     std::shared_ptr<MPPI> update_rule;
     if (config["update_rule"]["type"].as<std::string>() == "MPPI")
     {
@@ -241,7 +241,7 @@ std::shared_ptr<BatchSamplingMPC> setup_mpc(YAML::Node config)
 
     // setup algo
     // BatchSamplingMPC algo(model, cost_fn, action_sampler, update_rule);
-    std::cout << "Setting up MPC" << std::endl;
+    // std::cout << "Setting up MPC" << std::endl;
     auto algo = std::make_shared<BatchSamplingMPC>(model, cost_fn, action_sampler, update_rule);
     return algo;
 };

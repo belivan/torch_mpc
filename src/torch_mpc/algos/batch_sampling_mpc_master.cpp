@@ -22,6 +22,7 @@ int main()
     // std::cout << "Loaded config" << std::endl;
     // std::cout << "Device: " << device_config << std::endl;
     // std::cout << "Batch size: " << batch_size << std::endl;
+    
 
     // Load generated sampele data
     // torch::jit::Module tensors = torch::jit::load("/home/pearlfranz/aec/torch_mpc/src/torch_mpc/algos/sample.pth");
@@ -41,7 +42,6 @@ int main()
     auto model = mppi->model; // returns a shared pointer to Model
     auto cfn = mppi->cost_function; // returns a shared pointer to CostFunction
 
-    mppi->to(*device);
 
     // Testing can_compute_cost and inserting data
     Values val;
@@ -51,12 +51,9 @@ int main()
     // std::cout << "Expected: 0" << std::endl;
 
     // Simulate data loading
-    torch::Tensor goal1 = torch::tensor({{250.0, 0.0}, 
-                                        {600.0, 0.0}}, torch::TensorOptions().device(*device));
-    torch::Tensor goal2 = torch::tensor({{300.0, 0.0}, 
-                                        {700.0, 0.0}}, torch::TensorOptions().device(*device));
-    torch::Tensor goal3 = torch::tensor({{350.0, 0.0}, 
-                                        {800.0, 0.0}}, torch::TensorOptions().device(*device));
+    torch::Tensor goal1 = torch::tensor({{5.0, 0.0}, {10.0, 0.0}});
+    torch::Tensor goal2 = torch::tensor({{3.0, 0.0}, {4.0, 0.0}});
+    torch::Tensor goal3 = torch::tensor({{6.0, 0.0}, {4.0, 0.0}});
 
     auto goals= torch::stack({goal1, goal2, goal3}, 0);
     val.data = goals;
@@ -71,32 +68,32 @@ int main()
     cfn->data.keys["goals"] = val2;
 
     // std::cout << "Check 2" << std::endl;
-    // std::cout << cfn->can_compute_cost() << std::endl;
+    std::cout << cfn->can_compute_cost() << std::endl;
     // std::cout << "Expected: 0" << std::endl;
     
     std::unordered_map<std::string, torch::Tensor> metadata;
-    metadata["resolution"] = torch::tensor({2.5}, torch::TensorOptions().device(*device));
-    metadata["width"] = torch::tensor({80.0}, torch::TensorOptions().device(*device));
-    metadata["height"] = torch::tensor({80.0}, torch::TensorOptions().device(*device));
-    metadata["origin"] = torch::tensor({-40.5, -40.5}, torch::TensorOptions().device(*device));
-    metadata["length_x"] = torch::tensor({80.0}, torch::TensorOptions().device(*device));
-    metadata["length_y"] = torch::tensor({80.0}, torch::TensorOptions().device(*device));
+    metadata["resolution"] = torch::tensor({2.5});
+    metadata["width"] = torch::tensor({80.0});
+    metadata["height"] = torch::tensor({80.0});
+    metadata["origin"] = torch::tensor({-40.5, -40.5});
+    metadata["length_x"] = torch::tensor({80.0}); //might neeed adjustment
+    metadata["length_y"] = torch::tensor({80.0}); //might neeed adjustment
 
     Values val3 = val;
-    val3.data = torch::zeros({1, 32, 32}, torch::TensorOptions().device(*device));
+    val3.data = torch::zeros({3, 100, 100});
     val3.metadata = metadata;
 
     cfn->data.keys["local_costmap"] = val3;
 
     // std::cout << "Check 3" << std::endl;
-    // std::cout << cfn->can_compute_cost() << std::endl;
+    std::cout << cfn->can_compute_cost() << std::endl;
     // std::cout << "Expected: 0" << std::endl;
 
     Values val4 = val3;
     cfn->data.keys["local_speedmap"] = val3;
 
     // std::cout << "Check 4" << std::endl;
-    // std::cout << cfn->can_compute_cost() << std::endl;
+    std::cout << cfn->can_compute_cost() << std::endl;
     // std::cout << "Expected: 1" << std::endl;
 
     // std::cout << "Check 5 (Final)" << std::endl;
@@ -109,7 +106,7 @@ int main()
 
     // Another script shows auto states = torch::zeros({3, 4, 100, 5});
     auto x = torch::zeros({batch_size, model->observation_space()}, torch::TensorOptions().device(*device));
-    // std::cout << x.sizes() << std::endl;
+    std::cout << x.sizes() << std::endl;
     // auto x = torch::zeros({batch_size, 4, 100, 5}, torch::TensorOptions().device(*device));
     // x.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
 
@@ -141,7 +138,6 @@ int main()
     // std::cout << "U: " << U_tensor.sizes() << std::endl;
 
     // std::cout << "Rolling out with model" << std::endl;
-    model->to(torch::kCPU);
     auto traj = model->rollout(x, mppi->last_controls).to(torch::kCPU);
 
     // std::cout << "TRAJ COST = " << std::endl;
@@ -162,14 +158,14 @@ int main()
         auto u = mppi->get_control(x);
     }
     auto t4 = std::chrono::high_resolution_clock::now();
-    // std::cout << "ITR TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds" << std::endl;
+    std::cout << "ITR TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds" << std::endl;
 
-    std::string dir_path = "/home/pearlfranz/aec/torch_mpc/src/torch_mpc/algos/algos_data/";
+    std::string dir_path = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/src/torch_mpc/algos/algos_data/";
     torch::save(X_tensor, dir_path + "X.pt");
     torch::save(U_tensor, dir_path + "U.pt");
     torch::save(traj, dir_path + "traj.pt");
 
-    // std::cout << "Saved data" << std::endl;
+    std::cout << "Saved data" << std::endl;
 
     return 0;
 }

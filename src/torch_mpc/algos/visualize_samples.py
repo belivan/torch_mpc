@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 import yaml
 
-data_dir = '/home/anton/Desktop/SPRING24/AEC/torch_mpc/src/torch_mpc/algos/aglos_data'
+data_dir = '/home/pearlfranz/aec/torch_mpc/src/torch_mpc/algos/algos_data'
 X_jit = torch.jit.load(os.path.join(data_dir, 'X.pt'))
 U_jit = torch.jit.load(os.path.join(data_dir, 'U.pt'))
 traj_jit = torch.jit.load(os.path.join(data_dir, 'traj.pt'))
@@ -13,7 +13,7 @@ X = list(X_jit.parameters())[0].cpu().numpy()
 U = list(U_jit.parameters())[0].cpu().numpy()
 traj = list(traj_jit.parameters())[0].cpu().numpy()
 
-config_fp = '/home/atv/physics_atv_ws/src/control/torch_mpc/configs/test_config.yaml'
+config_fp = '/home/pearlfranz/aec/torch_mpc/configs/costmap_speedmap.yaml'
 config = yaml.safe_load(open(config_fp, 'r'))
 batch_size = config['common']['B']
 device = config['common']['device']
@@ -30,7 +30,7 @@ axs[1].set_title("Controls")
 axs[2].set_title("States")
 
 colors = 'rgbcmyk'
-for xi, name in enumerate(['X', 'Y', 'Th', 'V', 'W']):
+for xi, name in enumerate(['X', 'Y', 'Th']):
     c = colors[xi % len(colors)]
     for b in range(batch_size):
         axs[2].plot(X[b, :, xi], c=c, label=name if b == 0 else None)
@@ -39,5 +39,5 @@ axs[0].legend()
 axs[1].legend()
 axs[2].legend()
 
-axs[0].set_aspect('equal')
+# axs[0].set_aspect('equal')
 plt.show()
