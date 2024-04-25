@@ -138,6 +138,8 @@ class BatchSamplingMPC
             // Simulate K rollouts and get costs for each rollout
             auto noisy_controls = action_sampler->sample(last_controls, u_lb, u_ub);
             auto trajs = rollout_model(obs, extra_states, noisy_controls);
+            // std::cout << "trajs" << trajs.sizes() << std::endl;
+            // std::cout << "noisy_controls" << noisy_controls.sizes() << std::endl;
             auto [costs, feasible] = cost_function->cost(trajs, noisy_controls);
 
             auto not_feasible = feasible.logical_not();

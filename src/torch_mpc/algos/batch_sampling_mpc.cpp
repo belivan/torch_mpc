@@ -3,7 +3,7 @@
 
 int main() 
 {
-    std::string config_file = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml"; // specify the path to the config file
+    std::string config_file = "/home/belivan/AEC/torch_mpc/configs/costmap_speedmap.yaml"; // specify the path to the config file
 
     YAML::Node config = YAML::LoadFile(config_file);
     
@@ -114,7 +114,7 @@ int main()
     // x.index({torch::indexing::Slice(), 0, torch::indexing::Slice(), 0}) = torch::linspace(0, 60, 100);
 
     // std::cout << "Created state" << std::endl;
-    // std::cout << x << std::endl;
+    std::cout << x0 << std::endl;
 
     std::vector<torch::Tensor> X; // X is the state
     std::vector<torch::Tensor> U; // U is the control input
@@ -164,7 +164,7 @@ int main()
     // auto t4 = std::chrono::high_resolution_clock::now();
     // std::cout << "ITR TIME: " << std::chrono::duration_cast<std::chrono::milliseconds>(t4 - t3).count() << " milliseconds" << std::endl;
 
-    std::string dir_path = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/src/torch_mpc/algos/algos_data";
+    std::string dir_path = "/home/belivan/AEC/torch_mpc/src/torch_mpc/algos/algos_data";
     torch::save(X_tensor, dir_path + "X.pt");
     torch::save(U_tensor, dir_path + "U.pt");
     torch::save(traj, dir_path + "traj.pt");

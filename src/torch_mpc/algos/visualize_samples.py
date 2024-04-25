@@ -4,20 +4,30 @@ import os
 import matplotlib.pyplot as plt
 import yaml
 
-data_dir = '/home/pearlfranz/aec/torch_mpc/src/torch_mpc/algos/algos_data'
-X_jit = torch.jit.load(os.path.join(data_dir, 'X.pt'))
-U_jit = torch.jit.load(os.path.join(data_dir, 'U.pt'))
-traj_jit = torch.jit.load(os.path.join(data_dir, 'traj.pt'))
+# Set current directory to this file's directory
+os.chdir(os.path.dirname(os.path.realpath(__file__)))
+
+traj_jit = torch.jit.load('algos_data/TRAJ.pt')
+U_jit = torch.jit.load('algos_data/U.pt')
+X_jit = torch.jit.load('algos_data/X.pt')
 
 X = list(X_jit.parameters())[0].cpu().numpy()
 U = list(U_jit.parameters())[0].cpu().numpy()
 traj = list(traj_jit.parameters())[0].cpu().numpy()
 
-config_fp = '/home/pearlfranz/aec/torch_mpc/configs/costmap_speedmap.yaml'
+print(X.shape)
+print(U.shape)
+print(traj.shape)
+
+# Find config file relative to this file
+config_fp = '../../../configs/costmap_speedmap.yaml'
+# Load config file
 config = yaml.safe_load(open(config_fp, 'r'))
 batch_size = config['common']['B']
 device = config['common']['device']
 
+
+# for i, (trajectory, controls, states) in enumerate(zip(traj, U, X)):
 fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 axs[0].set_title("Traj")
 for b in range(batch_size):
@@ -40,4 +50,5 @@ axs[1].legend()
 axs[2].legend()
 
 # axs[0].set_aspect('equal')
-plt.show()
+# plt.show()
+plt.savefig('algos_data/visualize_samples.png')

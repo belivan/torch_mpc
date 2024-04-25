@@ -25,7 +25,7 @@ steer_topic = '/ros_talon/current_position'
 costmaps_topic = '/local_costmap'
 goals_topic = '/next_waypoints/odom'
 
-save_to = '../data/mppi_inputs/run_3/'  # make sure to change when needed
+save_to = '../data/mppi_inputs/run_4/'  # make sure to change when needed
 os.makedirs(save_to, exist_ok=True)  # output directory
 run_dir = "../data/"  # 2024-04-17-14-31-20_1.bag
 
@@ -103,7 +103,7 @@ for bfp in bfps:
             output_resolution = np.mean(reses, keepdims=True)
 
             metadata = {
-                'origin': origin.tolist(),
+                'origin': {'x': origin.tolist()[0], 'y': origin.tolist()[1]},
                 'resolution': output_resolution.item(),
                 'width': map_width.item(),
                 'height': map_height.item(),
@@ -156,6 +156,8 @@ print("DONE SAMPLING")
 print(f"Number of positions: {len(pos_list)}")
 print(f"Number of costmaps: {len(data_list)}")
 print(f"Number of waypoints: {len(waypoints_list)}")
+print(f"Number of steering angles: {len(steer_list)}")
+print(f"Number of costmap metadata: {len(costmap_metadata)}")
 
 # always make final pose a waypoint
 if curr_s > 0.2 * 25:
@@ -174,7 +176,8 @@ waypoints = np.stack(waypoints_list, axis=0)
 cmap = []
 for md in costmap_metadata:
     cmap.append({
-        'origin': md['origin'],
+        'origin': {'x': md['origin']['x'],
+                   'y': md['origin']['y']},
         'resolution': md['resolution'],
         'width': md['width'],
         'height': md['height'],
@@ -211,8 +214,14 @@ print("SAVED WAYPOINTS")
 
 # Save the position and steering data
 pos = torch.cat(pos_list, dim=0)
+print("POS SHAPE", pos.shape)
+print("POS SAMPLE", pos[0])
 steer = torch.cat(steer_list, dim=0)
+print("STEER SHAPE", steer.shape)
+print("STEER SAMPLE", steer[0])
 data = torch.cat(data_list, dim=0)
+print("DATA SHAPE", data.shape)
+print("DATA SAMPLE", data[0])
 
 pos_path = os.path.join(save_to, 'pos', 'pos_data.pth')
 os.makedirs(os.path.join(save_to, 'pos'), exist_ok=True)
@@ -228,6 +237,7 @@ tensor_dict = {'pos': pos[0],
                'data': data[0],
                'waypoints': torch.tensor(waypoints[0])}
 
+print("SAMPLES")
 print(pos[0].shape)
 print(steer[0].shape)
 print(data[0].shape)
@@ -240,18 +250,18 @@ os.makedirs(os.path.join(save_to, 'sample'), exist_ok=True)
 tensors.save(sample_dir)
 print("SAVED SAMPLE")
 
-tensor_dict = {'data': pos}
-tensors = TensorContainer(tensor_dict)
-tensors = torch.jit.script(tensors)
-tensors.save(pos_path)
+tensor_dict1 = {'data': pos}
+tensors1 = TensorContainer(tensor_dict1)
+tensors1 = torch.jit.script(tensors1)
+tensors1.save(pos_path)
 
-tensor_dict = {'data': steer}
-tensors = TensorContainer(tensor_dict)
-tensors = torch.jit.script(tensors)
-tensors.save(steer_path)
+tensor_dict2 = {'data': steer}
+tensors2 = TensorContainer(tensor_dict2)
+tensors2 = torch.jit.script(tensors2)
+tensors2.save(steer_path)
 
-tensor_dict = {'data': data}
-tensors = TensorContainer(tensor_dict)
-tensors = torch.jit.script(tensors)
-tensors.save(data_path)
+tensor_dict3 = {'data': data}
+tensors3 = TensorContainer(tensor_dict3)
+tensors3 = torch.jit.script(tensors3)
+tensors3.save(data_path)
 print("SAVED DATA")

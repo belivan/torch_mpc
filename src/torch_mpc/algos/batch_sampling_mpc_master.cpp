@@ -2,11 +2,26 @@
 #include "../setup_mpc.h"
 #include <filesystem>
 #include <cmath>
+#include <yaml-cpp/yaml.h>
+#include "fssimplewindow.h"
+
 namespace fs = std::filesystem;
 
 int main() 
 {
-    std::string config_file = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/configs/costmap_speedmap.yaml"; // specify the path to the config file
+    // set current path as file path
+    fs::current_path(fs::path(__FILE__).parent_path());
+    // now set config file path
+    fs::current_path(fs::path("../../../configs/"));
+    // check if the directory exists
+    if (fs::exists(fs::path("../../../configs/")))
+    {
+        std::cout << "Directory does not exist" << std::endl;
+        std::cout << "Dir: " << fs::current_path() << "\n";
+        return 1;
+    }
+
+    std::string config_file = "costmap_speedmap.yaml"; // specify the path to the config file
 
     YAML::Node config = YAML::LoadFile(config_file);
     
@@ -22,33 +37,40 @@ int main()
 
     const int batch_size = config["common"]["B"].as<int>();
 
-    fs::path data_dir_path = "C:/Users/anton/Documents/SPRING24/AEC/run_3";
-    fs::path costmaps_dir = data_dir_path / "costmaps/metadata.yaml";
-    fs::path data_dir = data_dir_path / "data/data.pth";
-    fs::path pos_dir = data_dir_path / "pos/pos.pth";
-    fs::path steer_dir = data_dir_path / "steer/steer_data.pth";
-    fs::path waypoints_dir = data_dir_path / "waypoints/forward.yaml";
+    fs::current_path(fs::path("../../data/mppi_inputs/run_4/"));
+    if(fs::exists(fs::path("../../data/mppi_inputs/run_4/")))
+    {
+        std::cout << "Directory does not exist" << std::endl;
+        std::cout << "Dir: " << fs::current_path() << "\n";
+        return 1;
+    }
+    std::string data_dir_path = "./";
+    std::string costmaps_dir = data_dir_path + "costmaps/metadata.yaml";
+    std::string data_dir = data_dir_path + "data/data.pth";
+    std::string pos_dir = data_dir_path + "pos/pos_data.pth";
+    std::string steer_dir = data_dir_path + "steer/steer_data.pth";
+    std::string waypoints_dir = data_dir_path + "waypoints/forward.yaml";
 
     // Load generated sampele data
     // Open costmaps
-    auto costmap_metadata_yaml = YAML::LoadFile(costmaps_dir.string());
+    YAML::Node costmap_metadata_yaml = YAML::LoadFile(costmaps_dir);
 
     // Open data
 
-    auto data_jit = torch::jit::load("C:/Users/anton/Documents/SPRING24/AEC/run_3/sample/sample.pth");
+    auto data_jit = torch::jit::load(data_dir);
    
     auto data_tensor = data_jit.attr("data").toTensor();
     std::cout << data_tensor.sizes() << std::endl;
     // Open pos
-    torch::jit::Module pos_jit = torch::jit::load(pos_dir.string());
+    torch::jit::Module pos_jit = torch::jit::load(pos_dir);
     auto pos_tensor = pos_jit.attr("data").toTensor();
     std::cout << pos_tensor.sizes() << std::endl;
     // Open steer
-    torch::jit::Module steer_jit = torch::jit::load(steer_dir.string());
+    torch::jit::Module steer_jit = torch::jit::load(steer_dir);
     auto steer_tensor = steer_jit.attr("data").toTensor();
     std::cout << steer_tensor.sizes() << std::endl;
     // Open waypoints
-    auto waypoints_yaml = YAML::LoadFile(waypoints_dir.string());
+    auto waypoints_yaml = YAML::LoadFile(waypoints_dir);
 
     std::cout << "Loaded data" << std::endl;
     // waypoints
@@ -69,16 +91,7 @@ int main()
     for(auto iter = costmap_metadata_yaml["costmaps"].begin(); iter != costmap_metadata_yaml["costmaps"].end(); ++iter)
     {
         auto mt = *iter;
-        bool first = true;
-        double x;
-        double y;
-        for(auto oi = mt["origin"].begin(); iter != mt["origin"].end(); ++oi)
-        {
-            auto ox = *oi;
-            if (first){first = false; x = ox.second.as<double>(); continue;}
-            y = ox.second.as<double>();
-        }
-        auto origin = torch::tensor({x,y}, torch::TensorOptions().device(*device));
+        auto origin = torch::tensor({mt["origin"]["x"].as<double>(), mt["origin"]["x"].as<double>()}, torch::TensorOptions().device(*device));
         auto resolution = torch::tensor({mt["resolution"].as<double>()}, torch::TensorOptions().device(*device));
         auto width = torch::tensor({mt["width"].as<double>()}, torch::TensorOptions().device(*device));
         auto height = torch::tensor({mt["height"].as<double>()}, torch::TensorOptions().device(*device));
@@ -113,17 +126,41 @@ int main()
 
     mppi->to(*device);
 
-    // Testing can_compute_cost and inserting data
     std::vector<torch::Tensor> X;
     std::vector<torch::Tensor> U;
     std::vector<torch::Tensor> TRAJ;
-    std::string dir_path = "C:/Users/anton/Documents/SPRING24/AEC/torch_mpc/src/torch_mpc/algos/algos_data";
+    std::vector<torch::Tensor> COSTS;
+    std::vector<torch::Tensor> X_TRUE;
+    std::vector<torch::Tensor> GOALS;
+
+    fs::current_path(fs::path("../../../torch_mpc/src/torch_mpc/algos/algos_data/"));
+    // check if the directory exists
+    if (fs::exists(fs::path("../../../torch_mpc/src/torch_mpc/algos/algos_data/")))
+    {
+        std::cout << "Directory does not exist" << std::endl;
+        std::cout << "Dir: " << fs::current_path() << "\n";
+        return 1;
+    }
+
+    //FsOpenWindow(0,0,300,300,1);
+    std::string dir_path = "./";
+
+    // temp
+    len_pos = 10;
     for(int i = 0; i < len_pos; ++i){
+        std::cout << "Currenty sampling " << i << " / " << len_pos << " trajectories \n" << std::endl;
+        auto t0 = std::chrono::high_resolution_clock::now();
+
         auto current_pos = pos_tensor[i].to(*device);
         auto current_data = data_tensor[i / interval_data].to(*device);
         auto current_steer = steer_tensor[i / interval_steer].to(*device);
-        auto current_waypoints = waypoints[i / interval_waypoints];
         auto current_metadata = metadatas[i / interval_metadatas];
+        for (auto& [key, value] : current_metadata)
+        {value = value.to(*device);}
+
+        // I want to select 3 goals/waypoints for each batch
+        auto current_waypoints = waypoints.index({Slice(i / interval_waypoints, i / interval_waypoints + 3)}).to(*device);
+        GOALS.push_back(current_waypoints);
 
         Values val;
         val.metadata = current_metadata;
@@ -135,26 +172,28 @@ int main()
         cfn->data.keys["waypoints"] = val_waypoints;
 
         Values val_goals;
-        val_goals.data = goals[i / interval_waypoints];
+        val_goals.data = goals.index({Slice(i / interval_waypoints, i / interval_waypoints + 3)}).to(*device);
         cfn->data.keys["goals"] = val_goals;
 
         torch::Tensor x0 = torch::empty({batch_size, 3}, torch::TensorOptions().device(*device));
 
         for (int i = 0; i < batch_size; i++) {
-            x0[i][0] = current_pos[0];
-            x0[i][1] = current_pos[1];
-            x0[i][2] = current_steer[0]; // Assuming current_steer is a tensor with one element.
+            x0.index_put_({i, 0}, current_pos[0]);
+            x0.index_put_({i, 1}, current_pos[1]);
+            x0.index_put_({i, 2}, current_steer[0]);
         }
+        std::cout << "x0: " << x0 << std::endl;
 
-        torch::Tensor x_list = torch::empty({batch_size, 3}, torch::TensorOptions().device(*device));
-        torch::Tensor u_list = torch::empty({batch_size, 2}, torch::TensorOptions().device(*device));
+        std::vector<torch::Tensor> x_list;
+        std::vector<torch::Tensor> u_list;
 
         torch::Tensor x = x0.clone();
-        for (int i = 0; i < 50; i++)
+        X_TRUE.push_back(x.clone());
+        for (int i = 0; i < 10; i++)
         {
-            X.push_back(x.clone());
+            x_list.push_back(x.clone());
             auto [u, feasible] = mppi->get_control(x);
-            U.push_back(u.clone());
+            u_list.push_back(u.clone());
             x = model->predict(x, u);
         }
 
@@ -166,18 +205,52 @@ int main()
         X.push_back(X_list);
         U.push_back(U_list);
         TRAJ.push_back(traj);
+
+        // std::cout << "TRAJ: " << traj.sizes() << std::endl;
+        // std::cout << "X: " << X_list.sizes() << std::endl;
+        // std::cout << "U: " << U_list.sizes() << std::endl;
+        // std::cout << "last_controls: " << mppi->last_controls.sizes() << std::endl;
+        auto cost = std::get<0>(cfn->cost(X_list.unsqueeze(0), U_list.unsqueeze(0)));
+        std::cout << "COST: " << cost << std::endl;
+        COSTS.push_back(cost);
+
+        auto t1 = std::chrono::high_resolution_clock::now();
+        std::cout << "TOOK: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << " milliseconds" << std::endl;
+        // FsSleep(20);
+        // FsPollDevice();
+        // auto key = FsInkey();
+        // if (key == FSKEY_ESC)
+        // {
+        //     std::cout << "ESC pressed" << std::endl;
+        //     auto X_tensor = torch::stack(X, 1).to(torch::kCPU);
+        //     auto U_tensor = torch::stack(U, 1).to(torch::kCPU);
+        //     auto TRAJ_tensor = torch::stack(TRAJ, 1).to(torch::kCPU);
+
+        //     torch::save(X_tensor, dir_path+"X.pt");
+        //     torch::save(U_tensor, dir_path+"U.pt");
+        //     torch::save(TRAJ_tensor, dir_path+"TRAJ.pt");
+        //     std::cout << "Saved data" << std::endl;
+        //     std::cout << "Exited at i = " << i << " / " << len_pos << std::endl;
+        // }
+        // FsSleep(20);
     }
 
-
+    std::cout << "Finished sampling" << std::endl;
     auto X_tensor = torch::stack(X, 1).to(torch::kCPU);
     auto U_tensor = torch::stack(U, 1).to(torch::kCPU);
     auto TRAJ_tensor = torch::stack(TRAJ, 1).to(torch::kCPU);
+    auto COSTS_tensor = torch::stack(COSTS, 0).to(torch::kCPU);
+    auto X_TRUE_tensor = torch::stack(X_TRUE, 1).to(torch::kCPU);
+    auto GOALS_tensor = torch::stack(GOALS, 1).to(torch::kCPU);
 
     torch::save(X_tensor, dir_path+"X.pt");
     torch::save(U_tensor, dir_path+"U.pt");
     torch::save(TRAJ_tensor, dir_path+"TRAJ.pt");
+    torch::save(COSTS_tensor, dir_path+"COSTS.pt");
+    torch::save(X_TRUE_tensor, dir_path+"X_TRUE.pt");
+    torch::save(GOALS_tensor, dir_path+"GOALS.pt");
 
-    // std::cout << "Saved data" << std::endl;
+    std::cout << "Saved data" << std::endl;
 
     return 0;
 }
