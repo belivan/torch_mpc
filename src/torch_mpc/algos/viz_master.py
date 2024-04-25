@@ -43,6 +43,7 @@ num_trajectories = X.shape[0]
 # plt.title("Overlay of Trajectories")
 # plt.xlabel("X Position")
 # plt.ylabel("Y Position")
+print("GRAPHING")
 for i in range(num_trajectories):
     if i == 0:
         plt.plot(X[i, :, 0], X[i, :, 1], 'b-', label='Trajectory')
@@ -56,7 +57,8 @@ plt.title("Results Comparison")
 plt.xlabel("X Position")
 plt.ylabel("Y Position")
 
-plt.savefig('algos_data/visualize_all_comapre_no_goals.png')
+plt.savefig('algos_data/visualize_ALL_comapre_no_goals_H5.png')
+print("DONE")
 
 
 # fig, axs = plt.subplots(1, 3, figsize=(18, 6))

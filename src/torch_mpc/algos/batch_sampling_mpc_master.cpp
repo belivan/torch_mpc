@@ -36,6 +36,14 @@ int main()
     else {throw std::runtime_error("Unknown device " + device_config);}
 
     const int batch_size = config["common"]["B"].as<int>();
+    const int rollout_period = config["common"]["H"].as<int>();
+    const int num_steps = config["replay"]["steps"].as<int>();
+
+    std::cout << "Loaded config" << std::endl;
+    std::cout << "Device: " << device_config << std::endl;
+    std::cout << "Batch size: " << batch_size << std::endl;
+    std::cout << "Rollout period: " << rollout_period << std::endl;
+    std::cout << "Num steps: " << num_steps << std::endl;
 
     fs::current_path(fs::path("../../data/mppi_inputs/run_4/"));
     if(fs::exists(fs::path("../../data/mppi_inputs/run_4/")))
@@ -146,9 +154,9 @@ int main()
     std::string dir_path = "./";
 
     // temp
-    len_pos = 10;
-    for(int i = 0; i < len_pos; ++i){
-        std::cout << "Currenty sampling " << i << " / " << len_pos << " trajectories \n" << std::endl;
+    // len_pos = 10;
+    for(int i = 0; i < num_steps; ++i){
+        std::cout << "Currenty sampling " << i << " / " << num_steps << " trajectories \n" << std::endl;
         auto t0 = std::chrono::high_resolution_clock::now();
 
         auto current_pos = pos_tensor[i].to(*device);
@@ -189,7 +197,7 @@ int main()
 
         torch::Tensor x = x0.clone();
         X_TRUE.push_back(x.clone());
-        for (int i = 0; i < 10; i++)
+        for (int i = 0; i < rollout_period; i++)
         {
             x_list.push_back(x.clone());
             auto [u, feasible] = mppi->get_control(x);
