@@ -7,7 +7,7 @@ include_directories(
         )
 
 add_executable(batch_sampling_mpc batch_sampling_mpc_master.cpp)
-target_link_libraries(batch_sampling_mpc fssimplewindow ${TORCH_LIBRARIES} yaml-cpp::yaml-cpp)
+target_link_libraries(batch_sampling_mpc ${TORCH_LIBRARIES} yaml-cpp::yaml-cpp)
 
 
 

@@ -105,66 +105,37 @@ public:
 
     std::pair<torch::Tensor, torch::Tensor> cost(const torch::Tensor& states, const torch::Tensor& actions,
                                                  const torch::Tensor& feasible, const CostKeyDataHolder& data) override {
-        // std::cout << "enter footprint costmap projection" << std::endl;
-        // move to local frame if necessary
-        // std::cout << "Data type: " << states.dtype() << std::endl;
-        // std::cout << "states shape" << states.sizes() << std::endl;
+       
         torch::Tensor states2 = local_frame ? utils::move_to_local_frame(states) : states;
-        // zeros init
-        // std::cout << "states2" << std::endl;
+
         torch::Tensor cost = torch::zeros({states2.size(0), states2.size(1)}, torch::TensorOptions().device(device));
         torch::Tensor costmap = utils::get_key_data_tensor(data, costmap_key[0]);
         std::unordered_map<std::string, torch::Tensor> metadata = utils::get_key_metadata_map(data, costmap_key[0]);
-        // std::cout << "cost costmap metadata" << std::endl;
+
         // get world_pos
-        torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(), torch::indexing::Slice(0, 3)});
+        torch::Tensor world_pos = states2.index({"...", torch::indexing::Slice(0, 3)});
         // get the footprint
         torch::Tensor footprint_pos = apply_footprint(world_pos); // IS IT HERE? EXPECTED SCALAR TYPE DOUBLE BUT FOUND FLOAT
         // footprint -> grid positions
         auto [grid_pos, invalid_mask] = utils::world_to_grid(footprint_pos, metadata);
         // roboaxes
-        // grid_pos = grid_pos.index({"...", torch::indexing::Slice(), torch::indexing::Slice(1, 0)}); // SEEMS LIKE THIS IS FINE
-        // grid_pos.masked_fill_(invalid_mask, 0);
-        // grid_pos = grid_pos.index_select(-1, torch::tensor({1, 0}, torch::kLong));
         grid_pos = grid_pos.index_select(-1, torch::tensor({1, 0}, torch::kLong).to(device));
-        // // uhh invalid costmap
-        // grid_pos.masked_fill_(invalid_mask, 0); // IT CRASHES HERE
-        // grid_pos.masked_fill_(invalid_mask, at::Scalar(0));
-        // grid_pos = grid_pos.index({torch::indexing::Ellipsis, })
-        grid_pos.masked_fill_(invalid_mask.unsqueeze(-1), 0); // pretty sure was an error with size of invalid mask uhoh, trying this
+        // uhh invalid costmap
+        grid_pos.masked_fill_(invalid_mask.unsqueeze(-1), 0);
         grid_pos = grid_pos.to(torch::kLong);
-
-        // torch::Tensor idx0 = torch::arange(grid_pos.size(0), torch::TensorOptions().device(device));
-        // std::vector<int64_t> shape = {idx0.size(0)};
-        // for (int i = 0; i < grid_pos.dim() - 2; ++i) {
-        //     shape.push_back(1);
-        // }
-        // idx0 = idx0.view(shape);
 
         torch::Tensor idx0 = torch::arange(grid_pos.size(0), torch::TensorOptions().device(device));
         std::vector<int64_t> shape(idx0.dim(), 1);
         shape.insert(shape.begin(), idx0.size(0));
         idx0 = idx0.view(shape);
 
-        // std::cout << costmap.sizes() << std::endl;
-        // std::cout << grid_pos.sizes() << std::endl;
-        // std::cout << "this is the first index into costmap" << idx0 << std::endl;
-        // note: seems like you cannot index into grid_pos with gridmap[..., 0] or gridmap[..., 1], unsure why?
-        // std::cout << "this is the second index into costmap" << grid_pos.index({"...", 0}) << std::endl;
-        // std::cout << "this is the third index into costmap" << grid_pos.index({"...", 1}) << std::endl;
-
         auto new_costs = costmap.index({idx0, grid_pos.index({"...", 0}), grid_pos.index({"...", 1})}).clone();
         new_costs.masked_fill_(invalid_mask, 0.0);
-        // new_costs.masked_fill(invalid_mask.unsqueeze(-1), 0);
-        // std::cout << "Shape of new_costs: " << new_costs.sizes() << std::endl; // Print shape of new_costs
-        // std::cout << "Shape of cost: " << cost.sizes() << std::endl; // Print shape of new_costs
-        // std::cout << "Shape of cost_thresh: " << cost_thresh.sizes() << std::endl; // Print shape of cost_thresh
 
         // thresholding
         auto new_feasible = new_costs.lt(cost_thresh).all(-1).all(-1); //IT CRASHES HERE, why
         // sum over time
-        /* THE SIZE OF NEW_COSTS IS [3, 1024, 50, 9] THE SIZE OF COST IS [1, 1024]*/
-        cost += new_costs.mean(-1).sum(-1); // IT CRASHES HERE differing sizes?
+        cost += new_costs.mean(-1).sum(-1);
         // std::cout << "Return Costmap" << std::endl;
         return {cost, new_feasible};
     }

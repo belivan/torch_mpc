@@ -156,38 +156,6 @@ public:
         return torch::stack(X, /*dim=*/X_dim);
     }
 
-    // def quat_to_yaw(self, quat): // not implemented
-
-    // Leave to be implemented later
-    // torch::Tensor get_observations(const torch::Tensor& batch) {
-    //     auto state = batch.index({state_key});
-
-    //     if (state.dim() == 1) {
-    //         // If state is a 1D tensor, unsqueeze it at dimension 0, recurse, 
-    //         // and then squeeze the result
-    //         auto new_batch = batch.unsqueeze(0); // see dict_map below, but this might work
-    //         return get_observations(new_batch).squeeze(0);
-    //     }
-
-    //     auto x = state.index({"...", 0});
-    //     auto y = state.index({"...", 1});
-    //     auto q = state.index({"...", Slice(3, 7)});
-    //     auto yaw = quat_to_yaw(q);
-    //     auto v = torch::norm(state.index({"...", Slice(7, 10)}), {}, -1);
-
-    //     auto actual_direction = torch::atan2(state.index({"...", 8}), state.index({"...", 7}));
-    //     auto delta = batch.index({steer_key}).index({"...", 0}) * (30.0 / 415.0) * (-M_PI / 180.0);
-    //     auto pitch = -batch.index({pitch_key}).index({"...", 0});
-
-    //     return torch::stack({x, y, yaw, v, delta, pitch}, -1);
-    // }
-
-    // def dict_map(d1, fn):
-    // if isinstance(d1, dict):
-    //     return {k:dict_map(v, fn) for k,v in d1.items()}
-    // else:
-    //     return fn(d1)
-
 
     // def get_actions(self, batch): // not implemented
 

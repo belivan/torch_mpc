@@ -3,7 +3,7 @@
 #include <filesystem>
 #include <cmath>
 #include <yaml-cpp/yaml.h>
-#include "fssimplewindow.h"
+// #include "fssimplewindow.h"
 
 namespace fs = std::filesystem;
 
@@ -37,7 +37,7 @@ int main()
 
     const int batch_size = config["common"]["B"].as<int>();
     const int rollout_period = config["common"]["H"].as<int>();
-    const int num_steps = config["replay"]["steps"].as<int>();
+    int num_steps = config["replay"]["steps"].as<int>();
 
     std::cout << "Loaded config" << std::endl;
     std::cout << "Device: " << device_config << std::endl;
@@ -89,11 +89,17 @@ int main()
         auto x = sv["pose"]["x"].as<double>();
         auto y = sv["pose"]["y"].as<double>();
         auto goal = torch::tensor({{x, y},{0.0, 0.0}}, torch::TensorOptions().device(*device));
-        if (waypoints.numel() == 0){waypoints = goal;}
-        else{waypoints = torch::cat({waypoints, goal}, 0);}
+        // std::cout << "Goal: " << goal.sizes() << std::endl;
+        if (waypoints.numel() == 0){waypoints = goal.unsqueeze(0);
+        // std::cout << "Waypoints: " << waypoints.sizes() << std::endl;
+        // std::cout << "here \n" << std::endl;
+        }
+        else{waypoints = torch::cat({waypoints, goal.unsqueeze(0)}, 0);}
     }
+    // std::cout << "Waypoints: " << waypoints.sizes() << std::endl;
 
-    torch::Tensor goals = torch::clone(waypoints);
+    // "Goals" not needed
+    // torch::Tensor goals = torch::clone(waypoints);
     // costmaps metadata
     std::vector<std::unordered_map<std::string, torch::Tensor>> metadatas;
     for(auto iter = costmap_metadata_yaml["costmaps"].begin(); iter != costmap_metadata_yaml["costmaps"].end(); ++iter)
@@ -127,6 +133,12 @@ int main()
     int interval_waypoints = std::ceil(static_cast<double>(len_pos) / len_waypoints);
     int interval_metadatas = std::ceil(static_cast<double>(len_pos) / len_metadatas);
 
+    std::cout << "Updating [  ] every:" << std::endl;
+    std::cout << "Data: " << interval_data << std::endl;
+    std::cout << "Steer: " << interval_steer << std::endl;
+    std::cout << "Waypoints: " << interval_waypoints << std::endl;
+    std::cout << "Metadatas: " << interval_metadatas << std::endl;
+
 
     auto mppi = setup_mpc(config); // returns a shared pointer to BatchSamplingMPC
     auto model = mppi->model; // returns a shared pointer to Model
@@ -151,10 +163,10 @@ int main()
     }
 
     //FsOpenWindow(0,0,300,300,1);
-    std::string dir_path = "./";
+    std::string dir_path = "./test1/";
 
     // temp
-    // len_pos = 10;
+    num_steps = 20;
     for(int i = 0; i < num_steps; ++i){
         std::cout << "Currenty sampling " << i << " / " << num_steps << " trajectories \n" << std::endl;
         auto t0 = std::chrono::high_resolution_clock::now();
@@ -166,9 +178,16 @@ int main()
         for (auto& [key, value] : current_metadata)
         {value = value.to(*device);}
 
-        // I want to select 3 goals/waypoints for each batch
-        auto current_waypoints = waypoints.index({Slice(i / interval_waypoints, i / interval_waypoints + 3)}).to(*device);
+        // I want to select 2 goals/waypoints for each batch
+        auto current_waypoints = waypoints.index({Slice(i / interval_waypoints, i / interval_waypoints + 2)}).to(*device);
+        std::cout << "Current waypoints: " << current_waypoints.sizes() << std::endl;
         GOALS.push_back(current_waypoints);
+
+        // std::cout << "Current pos: " << current_pos << std::endl;
+        std::cout << "Current costmap data: " << current_data.sizes() << std::endl;
+        // std::cout << "Current steer: " << current_steer << std::endl;
+        // std::cout << "Current metadata: " << current_metadata["origin"] << std::endl;
+
 
         Values val;
         val.metadata = current_metadata;
@@ -179,9 +198,9 @@ int main()
         val_waypoints.data = current_waypoints;
         cfn->data.keys["waypoints"] = val_waypoints;
 
-        Values val_goals;
-        val_goals.data = goals.index({Slice(i / interval_waypoints, i / interval_waypoints + 3)}).to(*device);
-        cfn->data.keys["goals"] = val_goals;
+        // Values val_goals;
+        // val_goals.data = goals.index({Slice(i / interval_waypoints, i / interval_waypoints + 3)}).to(*device);
+        // cfn->data.keys["goals"] = val_goals;
 
         torch::Tensor x0 = torch::empty({batch_size, 3}, torch::TensorOptions().device(*device));
 
@@ -214,33 +233,12 @@ int main()
         U.push_back(U_list);
         TRAJ.push_back(traj);
 
-        // std::cout << "TRAJ: " << traj.sizes() << std::endl;
-        // std::cout << "X: " << X_list.sizes() << std::endl;
-        // std::cout << "U: " << U_list.sizes() << std::endl;
-        // std::cout << "last_controls: " << mppi->last_controls.sizes() << std::endl;
         auto cost = std::get<0>(cfn->cost(X_list.unsqueeze(0), U_list.unsqueeze(0)));
         std::cout << "COST: " << cost << std::endl;
         COSTS.push_back(cost);
 
         auto t1 = std::chrono::high_resolution_clock::now();
         std::cout << "TOOK: " << std::chrono::duration_cast<std::chrono::milliseconds>(t1 - t0).count() << " milliseconds" << std::endl;
-        // FsSleep(20);
-        // FsPollDevice();
-        // auto key = FsInkey();
-        // if (key == FSKEY_ESC)
-        // {
-        //     std::cout << "ESC pressed" << std::endl;
-        //     auto X_tensor = torch::stack(X, 1).to(torch::kCPU);
-        //     auto U_tensor = torch::stack(U, 1).to(torch::kCPU);
-        //     auto TRAJ_tensor = torch::stack(TRAJ, 1).to(torch::kCPU);
-
-        //     torch::save(X_tensor, dir_path+"X.pt");
-        //     torch::save(U_tensor, dir_path+"U.pt");
-        //     torch::save(TRAJ_tensor, dir_path+"TRAJ.pt");
-        //     std::cout << "Saved data" << std::endl;
-        //     std::cout << "Exited at i = " << i << " / " << len_pos << std::endl;
-        // }
-        // FsSleep(20);
     }
 
     std::cout << "Finished sampling" << std::endl;
@@ -249,7 +247,21 @@ int main()
     auto TRAJ_tensor = torch::stack(TRAJ, 1).to(torch::kCPU);
     auto COSTS_tensor = torch::stack(COSTS, 0).to(torch::kCPU);
     auto X_TRUE_tensor = torch::stack(X_TRUE, 1).to(torch::kCPU);
-    auto GOALS_tensor = torch::stack(GOALS, 1).to(torch::kCPU);
+    auto GOALS_tensor = torch::stack(GOALS, 0).to(torch::kCPU);
+
+    std::cout << "Saving data" << std::endl;
+    std::cout << "X: " << X_tensor.sizes() << std::endl;
+    std::cout << "U: " << U_tensor.sizes() << std::endl;
+    std::cout << "TRAJ: " << TRAJ_tensor.sizes() << std::endl;
+    std::cout << "COSTS: " << COSTS_tensor.sizes() << std::endl;
+    std::cout << "X_TRUE: " << X_TRUE_tensor.sizes() << std::endl;
+    std::cout << "GOALS: " << GOALS_tensor.sizes() << std::endl;
+
+    std::cout << "Updated [ ] every:" << std::endl;
+    std::cout << "Data: " << interval_data << std::endl;
+    std::cout << "Steer: " << interval_steer << std::endl;
+    std::cout << "Waypoints: " << interval_waypoints << std::endl;
+    std::cout << "Metadatas: " << interval_metadatas << std::endl;
 
     torch::save(X_tensor, dir_path+"X.pt");
     torch::save(U_tensor, dir_path+"U.pt");

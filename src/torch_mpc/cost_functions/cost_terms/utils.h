@@ -50,9 +50,10 @@ namespace utils
         pos_out = pos_out.view(pos_out_new_size);
 
         auto traj_out = traj.clone();
-        traj_out.index_put_({torch::indexing::Slice(), xidx}, pos_out.select(-1, 0));
-        traj_out.index_put_({torch::indexing::Slice(), yidx}, pos_out.select(-1, 1));
-        traj_out.index_put_({torch::indexing::Slice(), thidx}, th_out.select(-1, 0));
+        std::cout << "traj_out: " << traj_out.sizes() << std::endl;
+        traj_out.index_put_({torch::indexing::Ellipsis, xidx}, pos_out.select(-1, 0));
+        traj_out.index_put_({torch::indexing::Ellipsis, yidx}, pos_out.select(-1, 1));
+        traj_out.index_put_({torch::indexing::Ellipsis, thidx}, th_out.select(-1, 0));
         return traj_out;
     }
 
@@ -84,7 +85,7 @@ namespace utils
         }
         auto trailing_dims = torch::IntArrayRef(array);
 
-        auto gx = (world_pos.select(-1, 0) - ox.view(trailing_dims)) / 
+        auto gx = (world_pos.select(-1, 0) - ox.view(trailing_dims)) /
                             res.view(trailing_dims);
 
         auto gy = (world_pos.select(-1, 1) - oy.view(trailing_dims)) / 
@@ -92,6 +93,9 @@ namespace utils
         // std::cout << "gx: " << gx << std::endl;
 
         auto grid_pos = torch::stack({gx, gy}, -1).to(torch::kLong);
+
+        // std::cout << "grid_pos: " << grid_pos.sizes() << std::endl;
+
         auto invalid_mask = (grid_pos.select(-1, 0) < 0) |
                             (grid_pos.select(-1, 1) < 0) |
                             (grid_pos.select(-1, 0) >= nx.view(trailing_dims)) |

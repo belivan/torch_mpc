@@ -43,10 +43,7 @@ public:
             cost_terms.push_back(term.second);
         }
         for (const auto& key : get_data_keys()) {
-            // std::cout << "Initializng keys" << std::endl;
-            // std::cout << "key: " << key << std::endl;
-            data.keys[key].data = torch::Tensor();  // Initialize with empty tensors, don't forget to check data
-            // std::cout << "data.keys[key].data: " << data.keys[key].data << std::endl;
+            data.keys[key].data = torch::Tensor();  // Initialize with empty tensors
         }
     }
 
@@ -58,33 +55,16 @@ public:
             states: a [B1 x B2 x T x N] tensor of states
             actions: a [B x B2 x T x M] tensor of actions
         */
-        // std::cout << "begin costs" << std::endl;
         auto costs = torch::zeros({ states.size(0), states.size(1) }, states.options());
         auto feasible = torch::ones({ states.size(0), states.size(1) }, torch::kBool).to(device);
-        // std::cout << "made costs and feasible" << std::endl;
-        //torch::Tensor new_cost, new_feasible;
-        // std::cout << "costs size" << costs.sizes() << std::endl;
         for (int i = 0; i < cost_terms.size(); ++i) {
-            // std::cout << "enter loop " << i << std::endl;
-            //std::cout << "states" << states.size(0) << std::endl;
-            //std::cout << "actions" << actions.size(0) << std::endl;
-            //std::cout << "feasible" << feasible.size(0) << std::endl;
-            //std::cout << "data" << data << std::endl;
             if (cost_terms[i] == nullptr) {
                 std::cout << "maybe nullptr error?" << std::endl;
             }
-            // std::cout << "not nullptr costterms" << std::endl;
             auto [new_cost, new_feasible] = cost_terms[i]->cost(states, actions, feasible, data); // THIS IS THE LINE WHERE IT CRASHES...?
-            // std::cout << "newcost in loop" << std::endl;
             costs += cost_weights[i] * new_cost;
-            // std::cout << "add to costs" << std::endl;
             feasible = feasible & new_feasible;
-            // std::cout << "feasible update" << std::endl;
-            // std::cout << feasible.sizes() << std::endl;
-            // std::cout << "costs" << std::endl;
-            // std::cout << costs.sizes() << std::endl;
         }
-        // std::cout << " ready to exit loop " << std::endl;
         return { costs, feasible };
     }
 
