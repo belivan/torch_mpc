@@ -85,21 +85,23 @@ namespace utils
         }
         auto trailing_dims = torch::IntArrayRef(array);
 
-        auto gx = (world_pos.select(-1, 0) - ox.view(trailing_dims)) /
+        auto gx = (world_pos.index({torch::indexing::Ellipsis, 0}) - ox.view(trailing_dims)) /
+                            res.view(trailing_dims);
+        // std::cout << "gx: " << gx.sizes() << std::endl;
+
+        auto gy = (world_pos.index({torch::indexing::Ellipsis, 1}) - oy.view(trailing_dims)) / 
                             res.view(trailing_dims);
 
-        auto gy = (world_pos.select(-1, 1) - oy.view(trailing_dims)) / 
-                            res.view(trailing_dims);
-        // std::cout << "gx: " << gx << std::endl;
+        // std::cout << "gy: " << gy.sizes() << std::endl;
 
         auto grid_pos = torch::stack({gx, gy}, -1).to(torch::kLong);
 
         // std::cout << "grid_pos: " << grid_pos.sizes() << std::endl;
 
-        auto invalid_mask = (grid_pos.select(-1, 0) < 0) |
-                            (grid_pos.select(-1, 1) < 0) |
-                            (grid_pos.select(-1, 0) >= nx.view(trailing_dims)) |
-                            (grid_pos.select(-1, 1) >= ny.view(trailing_dims));
+        auto invalid_mask = (grid_pos.index({torch::indexing::Ellipsis, 0}) < 0) |
+                            (grid_pos.index({torch::indexing::Ellipsis, 1}) < 0) |
+                            (grid_pos.index({torch::indexing::Ellipsis, 0}) >= nx.view(trailing_dims)) |
+                            (grid_pos.index({torch::indexing::Ellipsis, 1}) >= ny.view(trailing_dims));
 
         return {grid_pos, invalid_mask};
     }   

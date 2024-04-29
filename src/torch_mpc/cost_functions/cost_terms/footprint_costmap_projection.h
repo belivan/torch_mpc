@@ -121,15 +121,23 @@ public:
         // roboaxes
         grid_pos = grid_pos.index_select(-1, torch::tensor({1, 0}, torch::kLong).to(device));
         // uhh invalid costmap
+        // std::cout << "grid_pos: " << grid_pos.sizes() << std::endl;
+        // std::cout << "invalid_mask: " << invalid_mask.sizes() << std::endl;
         grid_pos.masked_fill_(invalid_mask.unsqueeze(-1), 0);
         grid_pos = grid_pos.to(torch::kLong);
 
         torch::Tensor idx0 = torch::arange(grid_pos.size(0), torch::TensorOptions().device(device));
-        std::vector<int64_t> shape(idx0.dim(), 1);
-        shape.insert(shape.begin(), idx0.size(0));
+        int ndims = grid_pos.dim() - 2;
+        std::vector<int64_t> shape(1, idx0.size(0));
+        shape.insert(shape.end(), ndims, 1);
         idx0 = idx0.view(shape);
 
+        // std::cout << "idx0: " << idx0.sizes() << std::endl;
+        // std::cout << "grid_pos: " << grid_pos.sizes() << std::endl;
+        // std::cout << "costmap: " << costmap.sizes() << std::endl;
+
         auto new_costs = costmap.index({idx0, grid_pos.index({"...", 0}), grid_pos.index({"...", 1})}).clone();
+        // std::cout << "new_costs: " << new_costs.sizes() << std::endl;
         new_costs.masked_fill_(invalid_mask, 0.0);
 
         // thresholding

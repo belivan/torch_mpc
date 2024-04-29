@@ -152,6 +152,7 @@ int main()
     std::vector<torch::Tensor> COSTS;
     std::vector<torch::Tensor> X_TRUE;
     std::vector<torch::Tensor> GOALS;
+    std::vector<torch::Tensor> COSTMAPS;
 
     fs::current_path(fs::path("../../../torch_mpc/src/torch_mpc/algos/algos_data/"));
     // check if the directory exists
@@ -163,10 +164,10 @@ int main()
     }
 
     //FsOpenWindow(0,0,300,300,1);
-    std::string dir_path = "./test1/";
+    std::string dir_path = "./test3/";
 
     // temp
-    num_steps = 20;
+    // num_steps = 20;
     for(int i = 0; i < num_steps; ++i){
         std::cout << "Currenty sampling " << i << " / " << num_steps << " trajectories \n" << std::endl;
         auto t0 = std::chrono::high_resolution_clock::now();
@@ -185,6 +186,7 @@ int main()
 
         // std::cout << "Current pos: " << current_pos << std::endl;
         std::cout << "Current costmap data: " << current_data.sizes() << std::endl;
+        COSTMAPS.push_back(current_data);
         // std::cout << "Current steer: " << current_steer << std::endl;
         // std::cout << "Current metadata: " << current_metadata["origin"] << std::endl;
 
@@ -248,6 +250,7 @@ int main()
     auto COSTS_tensor = torch::stack(COSTS, 0).to(torch::kCPU);
     auto X_TRUE_tensor = torch::stack(X_TRUE, 1).to(torch::kCPU);
     auto GOALS_tensor = torch::stack(GOALS, 0).to(torch::kCPU);
+    auto COSTMAPS_tensor = torch::stack(COSTMAPS, 0).to(torch::kCPU);
 
     std::cout << "Saving data" << std::endl;
     std::cout << "X: " << X_tensor.sizes() << std::endl;
@@ -256,6 +259,7 @@ int main()
     std::cout << "COSTS: " << COSTS_tensor.sizes() << std::endl;
     std::cout << "X_TRUE: " << X_TRUE_tensor.sizes() << std::endl;
     std::cout << "GOALS: " << GOALS_tensor.sizes() << std::endl;
+    std::cout << "COSTMAPS: " << COSTMAPS_tensor.sizes() << std::endl;
 
     std::cout << "Updated [ ] every:" << std::endl;
     std::cout << "Data: " << interval_data << std::endl;
@@ -269,6 +273,7 @@ int main()
     torch::save(COSTS_tensor, dir_path+"COSTS.pt");
     torch::save(X_TRUE_tensor, dir_path+"X_TRUE.pt");
     torch::save(GOALS_tensor, dir_path+"GOALS.pt");
+    torch::save(COSTMAPS_tensor, dir_path+"COSTMAPS.pt");
 
     std::cout << "Saved data" << std::endl;
 
