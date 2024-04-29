@@ -150,4 +150,4 @@ update_rule:
 recovery_behavior: []
 
 replay:
-    steps: 5000
+    steps: 2000

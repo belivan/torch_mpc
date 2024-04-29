@@ -74,13 +74,13 @@ while current_traj < num_trajectories - 1:
     c = axs[0].pcolormesh(world_x, world_y, costmaps[current_traj, 0, :, :], cmap='magma_r', shading='auto', alpha=0.2)
     fig.colorbar(c, ax=axs[0], label='Costmap')
 
-    axs[0].plot(X[current_traj, :, 0], X[current_traj, :, 1], 'b-', label='Trajectory', alpha=0.5)
+    axs[0].plot(X[current_traj, :, 0], X[current_traj, :, 1], 'b-', label='Trajectory', alpha=0.8)
 
     axs[1].plot(U[current_traj, :, 0], 'r-', label='Throttle')
     axs[1].plot(U[current_traj, :, 1], 'b-', label='Steer')
 
     if current_traj > 50:
-        axs[0].plot(X[current_traj - 50, :, 0], X[current_traj - 50, :, 1], 'r-', label='Trajectory Comparison', alpha=0.5)
+        axs[0].plot(X[current_traj - 50, :, 0], X[current_traj - 50, :, 1], 'r-', label='Trajectory Comparison', alpha=0.8)
 
     # axs[0].scatter(goals[i, 0, 0, 0], goals[i, 0, 0, 1], c='g', label='Goal 1')
     # axs[0].scatter(goals[i, 1, 0, 0], goals[i, 1, 0, 1], c='r', label='Goal 2')
@@ -124,10 +124,10 @@ while current_traj < num_trajectories - 1:
     manager = plt.get_current_fig_manager()
     manager.window.attributes('-fullscreen', True)
 
-    plt.show(block=False)
-    # plt.show()
-    plt.pause(0.03)
-    plt.clf()
+    # plt.show(block=False)
+    plt.show()
+    # plt.pause(0.03)
+    # plt.clf()
 
     print("DONE")
 

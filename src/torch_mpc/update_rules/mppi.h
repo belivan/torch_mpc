@@ -22,7 +22,6 @@ public:
         auto sampling_weights = (1.0 / eta) * torch::exp((-1.0 / temperature) * (costs - beta));
 
         // Get action sequence using weighted average
-        //  torch::Tensor controls = torch::sum(action_sequences * sampling_weights.view({-1, 1, 1}).expand_as(action_sequences), /*dim=*/1);
         auto controls = (action_sequences * sampling_weights.view({-1, 1, 1 })).sum(/*dim=*/1);
         return {controls, sampling_weights};
     }
