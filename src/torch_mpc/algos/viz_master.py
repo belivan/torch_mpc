@@ -13,7 +13,7 @@ def grid_to_world(grid_x, grid_y, resolution, origin):
 
 # Set current directory to this file's directory
 os.chdir(os.path.dirname(os.path.realpath(__file__)))
-data_path = 'algos_data/test2/'
+data_path = 'algos_data/test3/'
 traj_jit = torch.jit.load(data_path + 'TRAJ.pt')
 U_jit = torch.jit.load(data_path + 'U.pt')
 X_jit = torch.jit.load(data_path + 'X.pt')
@@ -99,7 +99,7 @@ while current_traj < num_trajectories - 1:
     else:
         index = current_traj - 50
 
-    axs[0].plot(X_real[index:current_traj, 0], X_real[index:current_traj, 1], 'g', label='GT')
+    axs[0].plot(X_real[0:current_traj, 0], X_real[0:current_traj, 1], 'g', label='GT')
     axs[0].set_xlabel("X Position")
     axs[0].set_ylabel("Y Position")
     axs[0].legend()
@@ -113,7 +113,7 @@ while current_traj < num_trajectories - 1:
     colors = 'rgbcmyk'
     for xi, name in enumerate(['X', 'Y', 'Th']):
         c = colors[xi % len(colors)]
-        axs[2].plot(np.arange(current_traj, current_traj + length, 1), X[current_traj, :, xi], c=c, label=name)
+        axs[2].plot(np.arange(0, 50, 1), X[current_traj, :, xi], c=c, label=name)
         axs[2].plot(X_real[index:current_traj, xi], label=name + ' GT', alpha=0.1)
     axs[2].set_xlabel("Time Step")
     axs[2].set_ylabel("State Value")
@@ -124,12 +124,11 @@ while current_traj < num_trajectories - 1:
     manager = plt.get_current_fig_manager()
     manager.window.attributes('-fullscreen', True)
 
-    # plt.show(block=False)
-    plt.show()
-    # plt.pause(0.03)
-    # plt.clf()
+    plt.show(block=False)
+    plt.pause(0.03)
+    plt.clf()
 
     print("DONE")
 
-    current_traj += 1
+    current_traj += 30
     print("Current Trajectory", current_traj)
