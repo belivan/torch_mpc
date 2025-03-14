@@ -1,0 +1,142 @@
+version: 1.0
+waypoints:
+- frame_id: sensor_init
+  pose:
+    x: -261.910551741866
+    y: 650.0393009339406
+    yaw: 0.0
+    z: -0.7830749297972026
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -259.8658593377154
+    y: 650.8572612161616
+    yaw: 0.0
+    z: -0.934658621994003
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -258.0809587753705
+    y: 651.8327076390914
+    yaw: 0.0
+    z: -0.9549417702797288
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -258.0194983933864
+    y: 651.8476812762715
+    yaw: 0.0
+    z: -0.9913811886939508
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -257.94187326387464
+    y: 651.8243724929719
+    yaw: 0.0
+    z: -1.0077099096661117
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -256.76184820345816
+    y: 652.5112639317465
+    yaw: 0.0
+    z: -1.0415209128121072
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -256.7970884749466
+    y: 652.473655088126
+    yaw: 0.0
+    z: -0.985238809547266
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -257.96097069952424
+    y: 652.1438521706214
+    yaw: 0.0
+    z: -1.0151963954380248
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -257.3606842375515
+    y: 652.3690287116084
+    yaw: 0.0
+    z: -1.187862280340151
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -258.86115067780395
+    y: 651.6989360173477
+    yaw: 0.0
+    z: -1.481785881017733
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -256.59020129344754
+    y: 652.8651484869077
+    yaw: 0.0
+    z: -1.75979804475684
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -259.64226893376576
+    y: 651.668986932757
+    yaw: 0.0
+    z: -1.8009914838871497
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -259.27986112433274
+    y: 652.1875001233865
+    yaw: 0.0
+    z: -1.9880144389327061
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -260.50860763851233
+    y: 651.8208429027602
+    yaw: 0.0
+    z: -2.0717207333762535
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -259.69192399247424
+    y: 652.2708453344918
+    yaw: 0.0
+    z: -2.2002042215564472
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -258.0327765808392
+    y: 653.0559488568351
+    yaw: 0.0
+    z: -2.5676359547827867
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -258.2981141386681
+    y: 652.8471897831806
+    yaw: 0.0
+    z: -2.7976079820870057
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -256.3974873959975
+    y: 653.6315408327192
+    yaw: 0.0
+    z: -3.17014481410788
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -256.17722621810447
+    y: 653.8190736144608
+    yaw: 0.0
+    z: -3.2336131274883346
+  radius: 4.0
+- frame_id: sensor_init
+  pose:
+    x: -255.70468421525757
+    y: 653.9653661868608
+    yaw: 0.0
+    z: -3.23574753485914
+  radius: 4.0
